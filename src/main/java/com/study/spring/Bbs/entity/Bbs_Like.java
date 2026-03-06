@@ -34,7 +34,7 @@ public class Bbs_Like {
 	
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name="bbs_id", nullable= false)
-	private Bbs bbs;
+	private Bbs bbsId;
 	
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name="member_id", nullable = false)

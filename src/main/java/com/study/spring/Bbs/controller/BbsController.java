@@ -21,17 +21,10 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @Tag(name = "게시판", description = "게시판 CRUD 및 인기글 API")
@@ -91,24 +84,6 @@ public class BbsController {
 			);
 	}
 
-
-    // ========================================
-    // 인기글 API
-    // ========================================
-    
-    // [실시간 인기글]
-    @GetMapping("/api/bbs/popular/realtime")
-    @Operation(summary = "실시간 인기글", description = "실시간 인기글 Top 10")
-    public List<PopularPostClassDto> getRealtimePopularPosts (){
-        return bbsService.findRealtimePopularPosts();
-    }
-
-    // [주간 인기글]
-    @GetMapping("/api/bbs/popular/weekly")
-    @Operation(summary = "주간 인기글", description = "주간 인기글 Top 10")
-    public List<PopularPostClassDto> getWeeklyPopularPosts (){
-        return bbsService.findWeeklyPopularPosts();
-    }
     
     // ========================================
     // 게시글 CRUD API

@@ -316,7 +316,7 @@ public class BbsService {
             bbsLikeRepository.save(like);
         } else {
             Bbs_Like like = Bbs_Like.builder()
-                    .bbs(bbs)
+                    .bbsId(bbs)
                     .memberId(member)
                     .isLike(isLike)
                     .build();

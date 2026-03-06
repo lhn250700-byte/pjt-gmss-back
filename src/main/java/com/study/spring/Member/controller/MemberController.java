@@ -152,7 +152,7 @@ public class MemberController {
 	@PatchMapping("/api/mypage/modify")
 	public ResponseEntity<String> memberModify(@AuthenticationPrincipal(expression = "username") String email,
 			@RequestBody MemberModifyDto modifydto) {
-		try {			
+		try {
 			// 서비스 호출
 			memberService.modifyMember(email, modifydto);
 			return ResponseEntity.ok("회원 정보가 성공적으로 수정되었습니다.");
@@ -160,6 +160,8 @@ public class MemberController {
 			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
 		} catch (Exception e) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("수정 중 오류가 발생했습니다.");
+		}
+	}
 	/**
 	 * Supabase 로그인 사용자를 member 테이블에 동기화.
 	 * Body: { "memberId": "email 또는 UUID", "nickname": "닉네임" }
