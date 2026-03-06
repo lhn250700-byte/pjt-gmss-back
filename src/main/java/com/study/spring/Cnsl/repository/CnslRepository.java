@@ -423,7 +423,8 @@ public interface CnslRepository extends JpaRepository<Cnsl_Reg, Long> {
             ci.cnsl_2_price  AS cnsl2Price,
             ci.cnsl_3_price  AS cnsl3Price,
             ci.cnsl_4_price  AS cnsl4Price,
-            ci.cnsl_5_price  AS cnsl5Price
+            ci.cnsl_5_price  AS cnsl5Price,
+            ci.cnsl_6_price  AS cnsl6Price
         from member m -- member전제
         join member_member_role_list ml on m.member_id = ml.member_member_id and ml.member_role_list = 1  -- 상담사만
         left join (
@@ -432,7 +433,8 @@ public interface CnslRepository extends JpaRepository<Cnsl_Reg, Long> {
                max(case when cnsl_tp = '2' then cnsl_price else 0 end ) cnsl_2_price,
                max(case when cnsl_tp = '3' then cnsl_price else 0 end ) cnsl_3_price,
                max(case when cnsl_tp = '4' then cnsl_price else 0 end ) cnsl_4_price,
-               max(case when cnsl_tp = '5' then cnsl_price else 0 end ) cnsl_5_price
+               max(case when cnsl_tp = '5' then cnsl_price else 0 end ) cnsl_5_price,
+			   max(case when cnsl_tp = '6' then cnsl_price else 0 end ) cnsl_6_price
         	from cnsl_info
            group by member_id
            ) ci on m.member_id = ci.member_id
@@ -450,19 +452,27 @@ public interface CnslRepository extends JpaRepository<Cnsl_Reg, Long> {
         	) a on a.cnsler_id = m.member_id
     	where 1=1
         -- 상담 유형 필터 (1,2,3 중 선택)
-        and (:cnslCate is null 
-             or (:cnslCate = '1')
-             or (:cnslCate = '2')
-             or (:cnslCate = '3')
+        and (
+		  :cnslCate is null
+		  or exists (
+			  select 1
+			  from cnsl_reg crg2
+			  where crg2.cnsler_id = m.member_id
+			  and crg2.cnsl_cate in (:cnslCate)
+			  and coalesce(crg2.del_yn,'N') = 'N'
+		  )
+	    ) 
 
-        -- 상담 방식 필터 (1~5)
-        and (:cnslTp is null
-             or (:cnslTp = '1' and ci.cnsl_1_price > 0)
-             or (:cnslTp = '2' and ci.cnsl_2_price > 0)
-             or (:cnslTp = '3' and ci.cnsl_3_price > 0)
-             or (:cnslTp = '4' and ci.cnsl_4_price > 0)
-             or (:cnslTp = '5' and ci.cnsl_5_price > 0)
-            )
+        -- 상담 방식 필터 (1~6)
+        and (
+			 :cnslTp is null
+			 or exists (
+				 select 1
+				 from cnsl_info ci2
+				 where ci2.member_id = m.member_id
+				 and ci2.cnsl_tp in (:cnslTp)
+			 )
+	 	)
 
         -- 가격 필터
         and (:minPrice is null 
@@ -472,11 +482,12 @@ public interface CnslRepository extends JpaRepository<Cnsl_Reg, Long> {
              or (ci.cnsl_3_price between :minPrice and :maxPrice)
              or (ci.cnsl_4_price between :minPrice and :maxPrice)
              or (ci.cnsl_5_price between :minPrice and :maxPrice)
+			 or (ci.cnsl_6_price between :minPrice and :maxPrice)			
              )
             )
         order by a.cnsl_cnt , a.avg_eval_pt, m.member_id
     """, nativeQuery = true)
-    Page<CounselorListDto> getCounselorList(Pageable pageable, @Param("cnslCate") String cnslCate, @Param("cnslTp") String cnslTp, @Param("minPrice") Integer minPrice, @Param("maxPrice") Integer maxPrice);
+    Page<CounselorListDto> getCounselorList(Pageable pageable, @Param("cnslCate") List<String> cnslCate, @Param("cnslTp") List<String> cnslTp, @Param("minPrice") Integer minPrice, @Param("maxPrice") Integer maxPrice);
 
     
     @Query(value="""
@@ -491,7 +502,8 @@ public interface CnslRepository extends JpaRepository<Cnsl_Reg, Long> {
 		    ci.cnsl_2_price  AS cnsl2Price,
 		    ci.cnsl_3_price  AS cnsl3Price,
 		    ci.cnsl_4_price  AS cnsl4Price,
-		    ci.cnsl_5_price  AS cnsl5Price
+		    ci.cnsl_5_price  AS cnsl5Price,
+		    ci.cnsl_6_price  AS cnsl6Price
 		from member m -- member전제
 		join member_member_role_list ml on m.member_id = ml.member_member_id and ml.member_role_list = 1  -- 상담사만
 		left join (
@@ -500,7 +512,8 @@ public interface CnslRepository extends JpaRepository<Cnsl_Reg, Long> {
 		           max(case when cnsl_tp = '2' then cnsl_price else 0 end ) cnsl_2_price,
 		           max(case when cnsl_tp = '3' then cnsl_price else 0 end ) cnsl_3_price,
 		           max(case when cnsl_tp = '4' then cnsl_price else 0 end ) cnsl_4_price,
-		           max(case when cnsl_tp = '5' then cnsl_price else 0 end ) cnsl_5_price
+		           max(case when cnsl_tp = '5' then cnsl_price else 0 end ) cnsl_5_price,
+		           max(case when cnsl_tp = '6' then cnsl_price else 0 end ) cnsl_6_price
 		    from cnsl_info
 		    group by member_id
 		) ci on m.member_id = ci.member_id

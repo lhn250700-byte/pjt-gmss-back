@@ -98,10 +98,11 @@ public class CnslController {
 	@GetMapping("/api/counselorList")
 	public ResponseEntity<Page<CounselorListDto>> getCounselorList(
 		@RequestParam(name="page", defaultValue = "0") int page,
-		@RequestParam(name="size", defaultValue = "10") int size
+		@RequestParam(name="size", defaultValue = "10") int size,
+		CounselorListReqeustDto requestDto
 	) {
 		Pageable pageable = PageRequest.of(page, size);
-		Page<CounselorListDto> counselorList = cnslService.getCounselorList(pageable);
+		Page<CounselorListDto> counselorList = cnslService.getCounselorList(pageable, requestDto);
 		return ResponseEntity.status(200).body(counselorList);
 	}
 	

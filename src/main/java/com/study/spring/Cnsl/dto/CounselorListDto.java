@@ -18,4 +18,5 @@ public interface CounselorListDto {
     Integer getCnsl3Price();
     Integer getCnsl4Price();
     Integer getCnsl5Price();
+    Integer getCnsl6Price();
 }
