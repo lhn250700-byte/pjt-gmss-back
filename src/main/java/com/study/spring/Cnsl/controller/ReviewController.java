@@ -1,5 +1,6 @@
 package com.study.spring.Cnsl.controller;
 
+import com.study.spring.Cnsl.dto.ReviewDto;
 import com.study.spring.Cnsl.entity.Cnsl_Review;
 import com.study.spring.Cnsl.service.ReviewService;
 import com.study.spring.activity.service.ActivityLogger;
@@ -62,6 +63,15 @@ public class ReviewController {
             @RequestParam(name = "member_id", required = false) String member_id) {
         
         return ResponseEntity.ok(reviewService.getReviews(page, limit, cnsl_id, member_id));
+    }
+
+    @GetMapping("/counselor/{memberId}")
+    public ResponseEntity<Page<ReviewDto>> getReviewList(
+        @RequestParam(name = "page", defaultValue = "0") int page,
+        @RequestParam(name = "size", defaultValue = "10") int size,
+        @PathVariable("memberId") String memberId
+    ) {
+        return ResponseEntity.ok(reviewService.getReviewList(page, size, memberId));
     }
 
     @GetMapping("/{id}")

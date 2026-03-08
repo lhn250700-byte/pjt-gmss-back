@@ -2,8 +2,10 @@ package com.study.spring.Member.service;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import com.study.spring.Member.repository.MemberInfoRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
@@ -26,7 +28,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService
         implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
 
     private final MemberRepository memberRepository;
-    private final MemberInfoRepository memberInfoRepository;
 
     @Override
     @Transactional
@@ -60,8 +61,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService
         // 신규 회원 → 자동 가입
         Member member = Member.builder()
                 .memberId(attributes.getEmail())
-                .pw("social-login")
-                .nickname("kakao")
+                .pw("kakao")
+                .nickname("social_" + UUID.randomUUID().toString().substring(0,8))
                 .social(true)
                 .build();
 

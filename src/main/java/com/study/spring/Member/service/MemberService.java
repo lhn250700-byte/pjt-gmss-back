@@ -5,11 +5,19 @@ import com.study.spring.Member.entity.Member;
 import com.study.spring.Member.entity.MemberRole;
 import com.study.spring.Member.repository.MemberInfoRepository;
 import com.study.spring.Member.repository.MemberRepository;
+import com.study.spring.wallet.entity.PointHistory;
+import com.study.spring.wallet.entity.Wallet;
+import com.study.spring.wallet.repository.PointHistoryRepository;
+import com.study.spring.wallet.repository.WalletRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -17,6 +25,22 @@ public class MemberService {
 	private final MemberInfoRepository memberInfoRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final MemberRepository memberRepository;
+	private final WalletRepository walletRepository;
+	private final PointHistoryRepository pointHistoryRepository;
+
+	public MemberDto getMemberByEmail(String email) {
+		return memberRepository.findByEmail(email)
+			.map(member -> new MemberDto(
+				member.getMemberId(), // email
+				member.getPw(),       // password
+				member.getNickname(),
+				member.isSocial(),
+				member.getMemberRoleList().stream()
+				.map(MemberRole::name) // enum → String
+				.collect(Collectors.toList())
+			))
+			.orElse(null);
+	}
 
 	@Transactional
 	public void register(SignUpDto request) {
@@ -61,6 +85,25 @@ public class MemberService {
 
 		member.addRole(MemberRole.USER);
 		memberRepository.save(member);
+
+		Wallet wallet = Wallet
+				.builder()
+				.member(member)
+				.currPoint(5000L)
+				.build();
+
+		walletRepository.save(wallet);
+
+		PointHistory pointHistory = PointHistory
+				.builder()
+				.memberId(member)
+				.amount(5000L)
+				.pointAfter(5000L)
+				.cnslId(null)
+				.brief("웰컴 포인트")
+				.build();
+
+		pointHistoryRepository.save(pointHistory);
 	}
 
 	@Transactional
@@ -107,6 +150,28 @@ public class MemberService {
 		if (kakaoSignUpDto.getText() != null) {
 			member.get().setText(kakaoSignUpDto.getText());
 		}
+
+		Wallet wallet = Wallet
+				.builder()
+				.member(member.get())
+				.currPoint(5000L)
+				.createdAt(LocalDateTime.now())
+				.updatedAt(LocalDateTime.now())
+				.build();
+
+		walletRepository.save(wallet);
+
+		PointHistory pointHistory = PointHistory
+				.builder()
+				.memberId(member.get())
+				.amount(5000L)
+				.pointAfter(5000L)
+				.cnslId(null)
+				.brief("웰컴 포인트")
+				.createdAt(LocalDateTime.now())
+				.build();
+
+		pointHistoryRepository.save(pointHistory);
 	}
 
 	/**

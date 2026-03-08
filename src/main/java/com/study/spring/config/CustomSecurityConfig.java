@@ -19,7 +19,6 @@
 	import com.study.spring.security.filter.JWTCheckFilter;
 	import com.study.spring.security.handler.APILoginFailHandler;
 	import com.study.spring.security.handler.APILoginSuccessHandler;
-	import com.study.spring.security.handler.OAuth2LoginSuccessHandler;
 
 	import lombok.RequiredArgsConstructor;
 	import lombok.extern.log4j.Log4j2;
@@ -51,17 +50,14 @@
 
 			});
 
+			 http.authorizeHttpRequests(auth -> auth.requestMatchers( "/",
+			 "/api/member/signup", "/api/member/login", "/api/auth/refresh",
+			 "/api/auth/signout", "/api/member_InfoNicknameChk", "/api/member/**",
+			 "/api/auth/**", "/docs", "/swagger-ui/**", "/api-docs/**", "/api/centers", "/api/centers/**").permitAll()
+			 .anyRequest().authenticated());
 
-
-
-//			 http.authorizeHttpRequests(auth -> auth.requestMatchers( "/",
-//			 "/api/member/signup", "/api/member/login", "/api/auth/refresh",
-//			 "/api/auth/signout", "/api/member_InfoNicknameChk", "/api/member/**",
-//			 "/api/auth/**", "/docs", "/swagger-ui/**", "/api-docs/**", "/api/centers", "/api/centers/**").permitAll()
-//			 .anyRequest().authenticated());
-//
-//			// 일반 로그인 필터
-//			http.addFilterBefore(new JWTCheckFilter(), UsernamePasswordAuthenticationFilter.class);
+			// 일반 로그인 필터
+			http.addFilterBefore(new JWTCheckFilter(), UsernamePasswordAuthenticationFilter.class);
 
 			// OAuth2 로그인 설정
 			http.oauth2Login(oauth2 -> oauth2

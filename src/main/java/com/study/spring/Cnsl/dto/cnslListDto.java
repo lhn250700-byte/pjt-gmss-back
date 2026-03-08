@@ -8,4 +8,5 @@ public interface cnslListDto {
     String getNickname();
     String getDtTime();
     String getStatusText();
+    String getType();
 }

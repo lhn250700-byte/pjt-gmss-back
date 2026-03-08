@@ -61,14 +61,21 @@ public class APILoginSuccessHandler implements AuthenticationSuccessHandler {
 		refreshTokenCookie.setMaxAge(60*60*24);
 		refreshTokenCookie.setAttribute("SameSite", "Lax"); // SameStie = Strict,Lax,None
 		response.addCookie(refreshTokenCookie);
-		
+
+		claims.put("accessToken",accessToken);
+
+		// 소셜 로그인 → 추가정보 입력 페이지 이동
 		if (isSocialLogin) {
+			if (memberDto.getNickname().startsWith("social_")) {
+				log.info(memberDto);
+				response.sendRedirect("http://localhost:5173/member/kakao-additional");
+				return;
+			}
+
 			response.sendRedirect("http://localhost:5173");
 			return;
 		}
-		
-		claims.put("accessToken",accessToken);
-		
+
 		Gson gson = new Gson();
 
 		String jsonStr= gson.toJson(claims); // claims + accessToken을 json 문자열로 변환

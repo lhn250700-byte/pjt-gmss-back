@@ -1,5 +1,6 @@
 package com.study.spring.Cnsl.service;
 
+import com.study.spring.Cnsl.dto.ReviewDto;
 import com.study.spring.Cnsl.entity.Cnsl_Reg;
 import com.study.spring.Cnsl.entity.Cnsl_Review;
 import com.study.spring.Cnsl.repository.CnslRepository;
@@ -176,5 +177,11 @@ public class ReviewService {
             "total_reviews", reviews.size(),
             "rating_distribution", distribution
         );
+    }
+
+    // [특정 상담사의 리뷰 리스트]
+    public Page<ReviewDto> getReviewList(int page, int size, String memberId) {
+        Pageable pageable = PageRequest.of(page, size);
+        return reviewRepository.getReviewList(pageable, memberId);
     }
 }

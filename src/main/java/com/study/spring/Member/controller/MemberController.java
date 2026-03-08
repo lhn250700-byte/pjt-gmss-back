@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import com.study.spring.Member.entity.Member;
 
@@ -40,7 +41,7 @@ public class MemberController {
 		return ResponseEntity.ok("회원가입 성공");
 	}
 
-	@PatchMapping("/api/member/signup")
+	@PatchMapping("/api/member/kakao-signup")
 	public ResponseEntity<?> completeKakaoSignup(@AuthenticationPrincipal MemberDto principal,
 			@RequestBody KakaoSignUpDto kakaoSignUpDto) {
 		if (principal == null) {
@@ -86,11 +87,22 @@ public class MemberController {
 				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "유효하지 않은 refreshToken입니다."));
 			}
 
+			String email = (String) claims.get("email");
+			MemberDto member = memberService.getMemberByEmail(email);
+			if (member == null) {
+				log.warn("DB에 해당 사용자가 존재하지 않습니다. email={}", email);
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+						.body(Map.of("error", "존재하지 않는 사용자입니다."));
+			}
+
+			Map<String, Object> newClaims = member.getClaims();
+
+
 			// 3) 새로운 accessToken 생성
-			String newAccessToken = JWTUtil.generateToken(claims, 10); // 10분
+			String newAccessToken = JWTUtil.generateToken(newClaims, 10); // 10분
 
 			// 4) refreshToken 회전 정책: 새로운 refreshToken 생성 및 쿠키 설정
-			String newRefreshToken = JWTUtil.generateToken(claims, 60 * 24); // 24시간
+			String newRefreshToken = JWTUtil.generateToken(newClaims, 60 * 24); // 24시간
 
 			Cookie refreshTokenCookie = new Cookie("refreshToken", newRefreshToken);
 			refreshTokenCookie.setHttpOnly(true);
@@ -103,12 +115,12 @@ public class MemberController {
 			// 5) 응답 반환
 			Map<String, Object> responseBody = new HashMap<>();
 			responseBody.put("accessToken", newAccessToken);
-			responseBody.put("email", claims.get("email"));
-			responseBody.put("nickname", claims.get("nickname"));
-			responseBody.put("social", claims.get("social"));
-			responseBody.put("roleNames", claims.get("roleNames"));
+			responseBody.put("email", newClaims.get("email"));
+			responseBody.put("nickname", newClaims.get("nickname"));
+			responseBody.put("social", newClaims.get("social"));
+			responseBody.put("roleNames", newClaims.get("roleNames"));
 
-			log.info("토큰 갱신 성공: email={}", claims.get("email"));
+			log.info("토큰 갱신 성공: email={}", newClaims.get("email"));
 			return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(responseBody);
 
 		} catch (Exception e) {

@@ -279,12 +279,7 @@ public class CnslService {
 
     // [상담사 리스트]
     public Page<CounselorListDto> getCounselorList(Pageable pageable, CounselorListReqeustDto requestDto) {
-        List<String> cnslCate = (requestDto.getCnslCate() == null || requestDto.getCnslCate().isEmpty()) ? null : requestDto.getCnslCate();
-        List<String> cnslTp = (requestDto.getCnslTp() == null || requestDto.getCnslTp().isEmpty()) ? null : requestDto.getCnslTp();
-
-        System.out.println("cnslTp: " + requestDto.getCnslTp());
-        System.out.println("cnslCate: " + requestDto.getCnslCate());
-        return cnslRepository.getCounselorList(pageable, cnslCate, cnslTp, requestDto.getMinPrice(), requestDto.getMaxPrice());
+        return cnslRepository.getCounselorList(pageable, requestDto.getCnslCate(), requestDto.getCnslTp(), requestDto.getMinPrice(), requestDto.getMaxPrice());
     }
     
     // [상담사 뷰]
