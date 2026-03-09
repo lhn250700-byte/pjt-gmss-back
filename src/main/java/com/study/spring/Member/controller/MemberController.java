@@ -1,9 +1,6 @@
 package com.study.spring.Member.controller;
 
-import com.study.spring.Member.dto.KakaoSignUpDto;
-import com.study.spring.Member.dto.MemberDto;
-import com.study.spring.Member.dto.MemberModifyDto;
-import com.study.spring.Member.dto.SignUpDto;
+import com.study.spring.Member.dto.*;
 import com.study.spring.Member.service.MemberService;
 import com.study.spring.util.JWTUtil;
 import jakarta.servlet.http.Cookie;
@@ -159,6 +156,13 @@ public class MemberController {
 					.body(Map.of("success", false, "error", "로그아웃 중 오류가 발생했습니다."));
 		}
 	}
+
+	// 마이페이지 회원정보 읽기
+	@GetMapping("/api/counselor/mypage")
+	public ResponseEntity<?> memberRead(@AuthenticationPrincipal(expression = "username") String email) {
+		System.out.println("아아아아아아" + email);
+		return ResponseEntity.ok(memberService.getCounselorByEmail(email));
+	}
 	
 	// 마이페이지 회원정보 수정
 	@PatchMapping("/api/mypage/modify")
@@ -174,6 +178,7 @@ public class MemberController {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("수정 중 오류가 발생했습니다.");
 		}
 	}
+
 	/**
 	 * Supabase 로그인 사용자를 member 테이블에 동기화.
 	 * Body: { "memberId": "email 또는 UUID", "nickname": "닉네임" }

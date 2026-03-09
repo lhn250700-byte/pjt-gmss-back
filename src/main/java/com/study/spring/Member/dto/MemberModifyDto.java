@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -15,5 +17,6 @@ public class MemberModifyDto {
 	private String persona;
 	private String mbti;
 	private String profile; // 상담사 전용
-    private String text; // 상담사 전용
+	private String text; // 상담사 한 줄 소개글
+	private List<String> hashTags;
 }

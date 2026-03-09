@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -210,6 +211,12 @@ public class MemberService {
 				member.setProfile(membermodifydto.getProfile());
 			if (membermodifydto.getText() != null)
 				member.setText(membermodifydto.getText());
+			if (membermodifydto.getHashTags() != null) {
+				Map<String, Object> map = new HashMap<>();
+				map.put("hashTag", membermodifydto.getHashTags());
+				member.setHashTags(map);
+			}
+
 		} else if (!member.getMemberRoleList().contains(MemberRole.ADMIN)) {
 			if (membermodifydto.getMbti() != null)
 				member.setMbti(membermodifydto.getMbti());
@@ -267,4 +274,9 @@ public class MemberService {
         newMember.addRole(MemberRole.USER);
         return memberRepository.save(newMember);
     }
+
+	// 상담사 정보 조회
+	public Member getCounselorByEmail(String email) {
+		return memberRepository.findByEmail(email).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
+	}
 }
