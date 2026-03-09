@@ -12,4 +12,5 @@ public class CounselorListReqeustDto {
     List<String> cnslTp;
     Integer minPrice;
     Integer maxPrice;
+    String[] hashTags;
 }

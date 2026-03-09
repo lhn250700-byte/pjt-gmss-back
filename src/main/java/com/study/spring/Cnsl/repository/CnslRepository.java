@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Optional;
 import java.lang.String;
 
-import com.study.spring.Cnsl.entity.CounselingStatus;
 import com.study.spring.Cnsl.dto.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,7 +14,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.study.spring.Cnsl.entity.Chat_Msg;
 import com.study.spring.Cnsl.entity.Cnsl_Reg;
 
 @Repository
@@ -487,9 +485,10 @@ public interface CnslRepository extends JpaRepository<Cnsl_Reg, Long> {
 			 or (ci.cnsl_6_price between :minPrice and :maxPrice)			
              )
             )
+			and (:hashTags is null or cardinality(cast(:hashTags as text[])) = 0 or jsonb_exists_any(m.hash_tags -> 'hashTag', cast(:hashTags as text[])))
         order by a.cnsl_cnt , a.avg_eval_pt, m.member_id
     """, nativeQuery = true)
-    Page<CounselorListDto> getCounselorList(Pageable pageable, @Param("cnslCate") List<String> cnslCate, @Param("cnslTp") List<String> cnslTp, @Param("minPrice") Integer minPrice, @Param("maxPrice") Integer maxPrice);
+    Page<CounselorListDto> getCounselorList(Pageable pageable, @Param("cnslCate") List<String> cnslCate, @Param("cnslTp") List<String> cnslTp, @Param("minPrice") Integer minPrice, @Param("maxPrice") Integer maxPrice, @Param("hashTags") String[] hashTags);
 
     
     @Query(value="""

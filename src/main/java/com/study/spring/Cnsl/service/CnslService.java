@@ -136,7 +136,7 @@ public class CnslService {
                 .amount(-1 * cnslPrice)
                 .pointAfter(currPoint - cnslPrice)
                 .cnslId(cnslReg.getCnslId())
-                .brief("상담 신청")
+                .brief(counselor.getNickname() + " 상담 신청")
                 .build();
 
         pointHistoryRepository.save(pointHistory);
@@ -263,7 +263,7 @@ public class CnslService {
                 .amount(cnslPrice)
                 .pointAfter(currPoint + cnslPrice)
                 .cnslId(cnsl_Reg.getCnslId())
-                .brief("상담 취소")
+                .brief(cnsl_Reg.getCnslerId().getNickname() + "상담 취소")
                 .build();
 
         pointHistoryRepository.save(pointHistory);
@@ -279,7 +279,15 @@ public class CnslService {
 
     // [상담사 리스트]
     public Page<CounselorListDto> getCounselorList(Pageable pageable, CounselorListReqeustDto requestDto) {
-        return cnslRepository.getCounselorList(pageable, requestDto.getCnslCate(), requestDto.getCnslTp(), requestDto.getMinPrice(), requestDto.getMaxPrice());
+
+        return cnslRepository.getCounselorList(
+                pageable,
+                requestDto.getCnslCate(),
+                requestDto.getCnslTp(),
+                requestDto.getMinPrice(),
+                requestDto.getMaxPrice(),
+                requestDto.getHashTags()
+        );
     }
     
     // [상담사 뷰]

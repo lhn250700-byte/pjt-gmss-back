@@ -222,6 +222,15 @@ public class MemberService {
 				member.setMbti(membermodifydto.getMbti());
 			if (membermodifydto.getPersona() != null)
 				member.setPersona(membermodifydto.getPersona());
+		} else {
+			if (membermodifydto.getMbti() != null)
+				member.setMbti(membermodifydto.getMbti());
+			if (membermodifydto.getPersona() != null)
+				member.setPersona(membermodifydto.getPersona());
+			if (membermodifydto.getPw() != null)
+				member.changePw(membermodifydto.getPw()); // set 안하고 changePw로 테스트
+			if (membermodifydto.getNickname() != null)
+				member.changeNickname(membermodifydto.getNickname());
 		}
 	}
 

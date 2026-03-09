@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 @Log4j2
-public class JWTCheckFilter extends OncePerRequestFilter {
+public class  JWTCheckFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         String path = request.getRequestURI();

@@ -126,6 +126,7 @@ public class PaymentController {
 			@AuthenticationPrincipal MemberDto member){
 		
 		List<PointHistoryDto> history = pointHistoryService.getMyPointHistory(member.getNickname());
+        System.out.println("아아아아아아아앙" + history);
 		
 		return ResponseEntity.ok(history);
 	}

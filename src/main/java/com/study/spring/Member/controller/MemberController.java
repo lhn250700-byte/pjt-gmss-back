@@ -158,9 +158,8 @@ public class MemberController {
 	}
 
 	// 마이페이지 회원정보 읽기
-	@GetMapping("/api/counselor/mypage")
+	@GetMapping("/api/mypage")
 	public ResponseEntity<?> memberRead(@AuthenticationPrincipal(expression = "username") String email) {
-		System.out.println("아아아아아아" + email);
 		return ResponseEntity.ok(memberService.getCounselorByEmail(email));
 	}
 	
