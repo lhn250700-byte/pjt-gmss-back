@@ -248,13 +248,19 @@ public class BbsController {
     // ========================================
 
     @PostMapping("/api/bbs/{id}/like")
-    @Operation(summary = "좋아요/싫어요", description = "좋아요(true) 또는 싫어요(false) 토글")
+    @Operation(summary = "좋아요/싫어요", description = "좋아요(true) 또는 싫어요(false) 토글. 로그인 필수.")
     public ResponseEntity<?> toggleLike(
             @PathVariable("id") Integer id,
             @RequestBody Map<String, Boolean> body,
             @RequestHeader(value = "X-User-Id", required = false) String memberId) {
         try {
-            String userId = memberId != null ? memberId : "anonymous";
+            // 비로그인(헤더 없음 또는 anonymous) 요청 거부
+            if (memberId == null || memberId.isBlank() || "anonymous".equalsIgnoreCase(memberId.trim())) {
+                return ResponseEntity.status(401).body(
+                    Map.of("error", "로그인 후 이용해 주세요.")
+                );
+            }
+            String userId = memberId.trim();
             boolean isLike = body != null && body.getOrDefault("is_like", true);
             bbsService.toggleLike(id, userId, isLike);
             return ResponseEntity.ok(

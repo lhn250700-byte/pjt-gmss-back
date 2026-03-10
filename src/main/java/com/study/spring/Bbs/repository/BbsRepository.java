@@ -39,11 +39,10 @@ public interface BbsRepository extends JpaRepository<Bbs, Integer> {
                      from cmt_like
                      group by cmt_id) cl_sum on c.cmt_id = cl_sum.cmt_id
         and COALESCE(c.del_yn, 'N') = 'N'
-        where
-        (
+        where COALESCE(b.del_yn, 'N') = 'N'
+        and (
             (:period = 'realtime'
-                and b.created_at >= CURRENT_DATE
-                and b.created_at < CURRENT_DATE + INTERVAL '1 day')
+                and b.created_at >= NOW() - INTERVAL '1 day')
         or
             (:period = 'week'
                 and b.created_at >= NOW() - INTERVAL '7 days')

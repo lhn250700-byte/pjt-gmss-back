@@ -116,6 +116,79 @@ public class KakaoLocalService {
         }
     }
 
+    /**
+     * 사용자 입력 키워드로 카카오 로컬 API 키워드 검색 (상담센터 위치 검색용)
+     * - query가 비어 있으면 빈 목록 반환
+     * - lat/lng/radiusKm 이 있으면 해당 반경 내만, 없으면 전국 검색(카카오 기본)
+     */
+    public List<KakaoPlaceDto> searchByKeyword(String query, Double lat, Double lng, Double radiusKm) {
+        try {
+            if (restApiKey == null || restApiKey.isBlank()) {
+                log.warn("kakao.rest-api-key not set");
+                return List.of();
+            }
+            String q = (query != null) ? query.trim() : "";
+            if (q.isEmpty()) return List.of();
+
+            UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(KEYWORD_SEARCH_URL)
+                    .queryParam("query", q)
+                    .queryParam("size", 15)
+                    .queryParam("sort", "distance");
+            if (lat != null && lng != null) {
+                builder.queryParam("x", String.valueOf(lng));
+                builder.queryParam("y", String.valueOf(lat));
+                int radiusMeters = (radiusKm != null && radiusKm > 0)
+                        ? (int) Math.min(20000, Math.round(radiusKm * 1000))
+                        : RADIUS_METERS_5KM;
+                builder.queryParam("radius", radiusMeters);
+            }
+            String url = builder.build().toUriString();
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Authorization", "KakaoAK " + restApiKey);
+            ResponseEntity<KakaoKeywordResponse> res = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    new HttpEntity<>(headers),
+                    KakaoKeywordResponse.class
+            );
+
+            if (res.getBody() == null || res.getBody().getDocuments() == null)
+                return List.of();
+
+            double latVal = (lat != null) ? lat : 0;
+            double lngVal = (lng != null) ? lng : 0;
+            List<KakaoPlaceDto> list = new ArrayList<>();
+            for (KakaoKeywordResponse.Document doc : res.getBody().getDocuments()) {
+                if (doc.getId() == null) continue;
+                double latDoc = parseDouble(doc.getY(), 0);
+                double lngDoc = parseDouble(doc.getX(), 0);
+                double distanceKmVal = (lat != null && lng != null && doc.getDistance() != null && !doc.getDistance().isEmpty())
+                        ? parseDouble(doc.getDistance(), 0) / 1000.0
+                        : haversine(latVal, lngVal, latDoc, lngDoc);
+                String address = (doc.getRoadAddressName() != null && !doc.getRoadAddressName().isBlank())
+                        ? doc.getRoadAddressName()
+                        : doc.getAddressName();
+                list.add(KakaoPlaceDto.builder()
+                        .id(doc.getId())
+                        .name(doc.getPlaceName())
+                        .address(address)
+                        .phone(doc.getPhone())
+                        .latitude(latDoc)
+                        .longitude(lngDoc)
+                        .distanceKm(Math.round(distanceKmVal * 10.0) / 10.0)
+                        .categoryName(doc.getCategoryName())
+                        .placeUrl(doc.getPlaceUrl())
+                        .source("kakao")
+                        .build());
+            }
+            return list;
+        } catch (Exception e) {
+            log.error("Kakao searchByKeyword failed (query={})", query, e);
+            return List.of();
+        }
+    }
+
     private static double parseDouble(String s, double def) {
         if (s == null || s.isBlank()) return def;
         try {
