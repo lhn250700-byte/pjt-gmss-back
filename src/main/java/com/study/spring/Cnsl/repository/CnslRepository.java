@@ -534,9 +534,11 @@ public interface CnslRepository extends JpaRepository<Cnsl_Reg, Long> {
 	// 마이페이지 상담 내역 상담사 리스트
 	@Query(value = """
 			select
+			cr.cnsl_id,
+			get_code_nm('cnsl_tp', cr.cnsl_tp) as cnslType,
 			cr.cnsl_title as cnslTitle,
 			m.nickname,
-			cr.cnsl_stat as cnslStat,
+			get_code_nm('cnsl_stat', cr.cnsl_stat) as cnslStat,
 			cr.created_at as createdAt
 			from cnsl_reg cr
 			left join member m on m.member_id = cr.cnsler_id
