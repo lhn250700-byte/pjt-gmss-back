@@ -37,7 +37,8 @@ public class  JWTCheckFilter extends OncePerRequestFilter {
                   path.startsWith("/swagger-ui/") ||
                   path.startsWith("/api-docs/") ||
                   path.startsWith("/api/member_InfoNicknameChk") || 
-                  path.equals("/api-docs")
+                  path.equals("/api-docs") ||
+                  path.startsWith("/api/bbs")
           ) return true;
 
 
