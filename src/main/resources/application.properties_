@@ -27,7 +27,13 @@ springdoc.api-docs.path=/api-docs
 springdoc.swagger-ui.operations-sorter=alpha
 
 # ==============================
-# OAuth2 - Kakao
+# Kakao - 로컬 API (상담센터 키워드/주변 검색, 서버에서만 사용)
+# ==============================
+# REST API 키: 개발자 콘솔 > 앱 > 앱 키 > REST API 키 (로컬 API 호출용)
+kakao.rest-api-key=cdfe83e29f74d808d8b1a7a106df837a
+
+# ==============================
+# OAuth2 - Kakao (로그인용, client-id/secret 은 개발자 콘솔에서 별도 확인)
 # ==============================
 spring.security.oauth2.client.registration.kakao.client-id=[api key]
 spring.security.oauth2.client.registration.kakao.client-secret=[secret key]

@@ -66,6 +66,22 @@ public class CenterController {
         ));
     }
 
+    /** 키워드 검색: /search/keyword 로 두어 /{id} 와 충돌 방지 */
+    @GetMapping("/search/keyword")
+    @Operation(summary = "카카오 로컬 키워드 검색", description = "사용자 입력 키워드로 상담센터/장소 검색 (위치·반경 선택)")
+    public ResponseEntity<Map<String, Object>> getKakaoKeyword(
+            @RequestParam(name = "query") String query,
+            @RequestParam(name = "lat", required = false) Double lat,
+            @RequestParam(name = "lng", required = false) Double lng,
+            @RequestParam(name = "radiusKm", required = false) Double radiusKm) {
+        List<KakaoPlaceDto> places = kakaoLocalService.searchByKeyword(query, lat, lng, radiusKm);
+        return ResponseEntity.ok(Map.of(
+                "places", places,
+                "totalCount", places.size(),
+                "query", query != null ? query : ""
+        ));
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "센터 상세", description = "단일 센터 상세 정보")
     public ResponseEntity<SupportCenter> getCenter(@PathVariable("id") Long id) {
