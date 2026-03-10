@@ -7,7 +7,9 @@ import com.study.spring.Bbs.dto.PostListDto;
 import com.study.spring.Bbs.entity.Bbs;
 import com.study.spring.Bbs.entity.Bbs_Comment;
 import com.study.spring.Bbs.entity.Bbs_Like;
+import com.study.spring.Bbs.entity.Cmt_Like;
 import com.study.spring.Bbs.repository.BbsCommentRepository;
+import com.study.spring.Bbs.repository.CmtLikeRepository;
 import com.study.spring.Bbs.repository.BbsLikeRepository;
 import com.study.spring.Bbs.repository.BbsRepository;
 import com.study.spring.Member.entity.Member;
@@ -23,7 +25,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -42,6 +46,8 @@ public class BbsService {
     BbsCommentRepository bbsCommentRepository;
     @Autowired
     BbsLikeRepository bbsLikeRepository;
+    @Autowired
+    CmtLikeRepository cmtLikeRepository;
     @Autowired
     MemberRepository memberRepository;
     @Autowired
@@ -217,8 +223,11 @@ public class BbsService {
     /**
      * 게시글 상세 조회 (member 한 번에 로딩)
      */
+    @Transactional
     public Optional<Bbs> getPostById(Integer bbsId) {
-        return bbsRepository.findByIdWithMember(bbsId);
+    	Optional<Bbs> bbs = bbsRepository.findByIdWithMember(bbsId); 
+    	bbs.get().setViews(bbs.get().getViews() + 1);
+        return bbs;
     }
     
     /**
@@ -267,8 +276,41 @@ public class BbsService {
         return bbsCommentRepository.findByBbsIdAndDelYnOrderByCreatedAtAsc(bbsId);
     }
 
+    /**
+     * 댓글 목록 + 좋아요/싫어요 건수 + parentCmtId (프론트 연동용)
+     */
+    public List<Map<String, Object>> getCommentsWithMeta(Integer bbsId) {
+        List<Bbs_Comment> list = getComments(bbsId);
+        List<Map<String, Object>> out = new ArrayList<>();
+        for (Bbs_Comment c : list) {
+            List<Cmt_Like> likes = cmtLikeRepository.findByCmtId(c);
+            long likeCnt = likes.stream().filter(Cmt_Like::isLike).count();
+            long dislikeCnt = likes.stream().filter(l -> !l.isLike()).count();
+            Map<String, Object> row = new HashMap<>();
+            row.put("cmt_id", c.getCmt_id());
+            row.put("content", c.getContent());
+            row.put("created_at", c.getCreated_at());
+            row.put("parent_cmt_id", c.getParentCmtId());
+            if (c.getMemberId() != null) {
+                Map<String, Object> m = new HashMap<>();
+                m.put("memberId", c.getMemberId().getMemberId());
+                m.put("nickname", c.getMemberId().getNickname());
+                row.put("memberId", m);
+            }
+            row.put("likeCount", likeCnt);
+            row.put("dislikeCount", dislikeCnt);
+            out.add(row);
+        }
+        return out;
+    }
+
     @Transactional
     public Bbs_Comment addComment(Integer bbsId, String memberIdStr, String content) {
+        return addComment(bbsId, memberIdStr, content, null);
+    }
+
+    @Transactional
+    public Bbs_Comment addComment(Integer bbsId, String memberIdStr, String content, Integer parentCmtId) {
         Bbs bbs = bbsRepository.findById(bbsId)
                 .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다"));
         Member member = memberRepository.findById(memberIdStr)
@@ -276,15 +318,60 @@ public class BbsService {
         if (content == null || content.isBlank()) {
             throw new IllegalArgumentException("댓글 내용을 입력해 주세요.");
         }
+        Integer parentId = null;
+        if (parentCmtId != null) {
+            Bbs_Comment parent = bbsCommentRepository.findById(parentCmtId)
+                    .orElseThrow(() -> new IllegalArgumentException("상위 댓글을 찾을 수 없습니다"));
+            if (parent.getBbsId() == null || !parent.getBbsId().getBbsId().equals(bbsId)) {
+                throw new IllegalArgumentException("같은 게시글의 댓글에만 답글을 달 수 있습니다.");
+            }
+            if ("Y".equals(parent.getDelYn())) {
+                throw new IllegalArgumentException("삭제된 댓글에는 답글을 달 수 없습니다.");
+            }
+            parentId = parentCmtId;
+        }
         Bbs_Comment comment = Bbs_Comment.builder()
                 .bbsId(bbs)
                 .memberId(member)
                 .content(content.trim())
+                .parentCmtId(parentId)
                 .delYn("N")
                 .build();
         Bbs_Comment saved = bbsCommentRepository.save(comment);
-        log.info("댓글 작성: bbsId={}, cmtId={}", bbsId, saved.getCmt_id());
+        log.info("댓글 작성: bbsId={}, cmtId={}, parentCmtId={}", bbsId, saved.getCmt_id(), parentId);
         return saved;
+    }
+
+    @Transactional
+    public void toggleCommentLike(Integer cmtId, String memberIdStr, boolean isLike) {
+        Bbs_Comment cmt = bbsCommentRepository.findById(cmtId)
+                .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다"));
+        Member member = memberRepository.findById(memberIdStr)
+                .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다. 로그인 후 이용해 주세요."));
+        Optional<Cmt_Like> existing = cmtLikeRepository.findByCmtIdAndMemberIdMemberId(cmt, memberIdStr);
+        if (existing.isPresent()) {
+            Cmt_Like cl = existing.get();
+            cl.setLike(isLike);
+            cmtLikeRepository.save(cl);
+        } else {
+            cmtLikeRepository.save(Cmt_Like.builder()
+                    .cmtId(cmt)
+                    .memberId(member)
+                    .isLike(isLike)
+                    .build());
+        }
+        log.info("댓글 좋아요 토글: cmtId={}, isLike={}", cmtId, isLike);
+    }
+
+    public Map<String, Long> getCommentLikeCounts(Integer cmtId) {
+        Bbs_Comment cmt = bbsCommentRepository.findById(cmtId).orElse(null);
+        if (cmt == null) {
+            return Map.of("likeCount", 0L, "dislikeCount", 0L);
+        }
+        List<Cmt_Like> list = cmtLikeRepository.findByCmtId(cmt);
+        long likeCount = list.stream().filter(Cmt_Like::isLike).count();
+        long dislikeCount = list.stream().filter(l -> !l.isLike()).count();
+        return Map.of("likeCount", likeCount, "dislikeCount", dislikeCount);
     }
 
     @Transactional
