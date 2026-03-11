@@ -20,17 +20,16 @@ import com.study.spring.wallet.repository.PointHistoryRepository;
 import com.study.spring.wallet.repository.WalletRepository;
 import lombok.extern.slf4j.Slf4j;
 
-import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import com.study.spring.Cnsl.entity.Chat_Msg;
 import com.study.spring.Cnsl.entity.Cnsl_Reg;
 import com.study.spring.Cnsl.repository.CnslRepository;
 import com.study.spring.Member.entity.Member;
 import com.study.spring.Member.repository.MemberRepository;
+import com.study.spring.keyword.service.KeywordService;
 
 import jakarta.transaction.Transactional;
 
@@ -51,6 +50,8 @@ public class CnslService {
     private CnslerSchdRepository cnslerSchdRepository;
     @Autowired
     private CnslRespRepository cnslRespRepository;
+    @Autowired
+    private KeywordService keywordService;
 
     // [상담 예약]
     @Transactional
@@ -128,6 +129,26 @@ public class CnslService {
                 .build();
 
         cnslRepository.save(cnslReg);
+
+        // 민감 키워드 자동 검사 (상담 신청: 제목+내용)
+        try {
+            String fullContent = (cnslReqDto.getCnsl_title() != null ? cnslReqDto.getCnsl_title() : "") + " " +
+                    (cnslReqDto.getCnsl_content() != null ? cnslReqDto.getCnsl_content() : "");
+            List<java.util.Map<String, Object>> detected = keywordService.detectSensitiveKeywords(fullContent);
+            if (!detected.isEmpty()) {
+                keywordService.recordRiskPost(
+                        "cnsl_reg",
+                        "CNSL",
+                        cnslReg.getCnslId(),
+                        fullContent,
+                        detected,
+                        member.getMemberId()
+                );
+                log.warn("⚠️ 민감 키워드 감지된 상담 신청: cnslId={}, 키워드 개수={}", cnslReg.getCnslId(), detected.size());
+            }
+        } catch (Exception e) {
+            log.warn("민감 키워드 상담 신청 감지/기록 실패: cnslId={}, err={}", cnslReg.getCnslId(), e.getMessage());
+        }
 
         // [포인트 내역 생성]
         PointHistory pointHistory = PointHistory
@@ -209,6 +230,26 @@ public class CnslService {
 
         if (cnslModiReqDto.getCnsl_content() != null) {
             cnsl_Reg.setCnslContent(cnslModiReqDto.getCnsl_content());
+        }
+
+        // 민감 키워드 자동 검사 (상담 수정: 제목/내용)
+        try {
+            String fullContent = (cnsl_Reg.getCnslTitle() != null ? cnsl_Reg.getCnslTitle() : "") + " " +
+                    (cnsl_Reg.getCnslContent() != null ? cnsl_Reg.getCnslContent() : "");
+            List<java.util.Map<String, Object>> detected = keywordService.detectSensitiveKeywords(fullContent);
+            if (!detected.isEmpty()) {
+                keywordService.recordRiskPost(
+                        "cnsl_reg_update",
+                        "CNSL",
+                        cnsl_Reg.getCnslId(),
+                        fullContent,
+                        detected,
+                        cnsl_Reg.getMemberId() != null ? cnsl_Reg.getMemberId().getMemberId() : null
+                );
+                log.warn("⚠️ 민감 키워드 감지된 상담 수정: cnslId={}, 키워드 개수={}", cnsl_Reg.getCnslId(), detected.size());
+            }
+        } catch (Exception e) {
+            log.warn("민감 키워드 상담 수정 감지/기록 실패: cnslId={}, err={}", cnslId, e.getMessage());
         }
 
         return cnslId;
@@ -407,6 +448,25 @@ public class CnslService {
         cnsl_Reg.setCnslStat("B");
         cnslRepository.save(cnsl_Reg);
         cnslRespRepository.save(cnsl_resp);
+
+        // 민감 키워드 자동 검사 (상담 내역 메시지)
+        try {
+            String fullContent = message != null ? message : "";
+            List<java.util.Map<String, Object>> detected = keywordService.detectSensitiveKeywords(fullContent);
+            if (!detected.isEmpty()) {
+                keywordService.recordRiskPost(
+                        "cnsl_resp",
+                        "CNSL",
+                        cnsl_Reg.getCnslId(),
+                        fullContent,
+                        detected,
+                        cnsl_Reg.getCnslerId() != null ? cnsl_Reg.getCnslerId().getMemberId() : null
+                );
+                log.warn("⚠️ 민감 키워드 감지된 상담 승인 메시지: cnslId={}, 키워드 개수={}", cnsl_Reg.getCnslId(), detected.size());
+            }
+        } catch (Exception e) {
+            log.warn("민감 키워드 상담 승인 메시지 감지/기록 실패: cnslId={}, err={}", cnslId, e.getMessage());
+        }
     }
 
     // [상담 거절]
@@ -442,6 +502,25 @@ public class CnslService {
         cnsl_Reg.setCnslTodoYn("N");
         cnslRepository.save(cnsl_Reg);
         cnslRespRepository.save(cnsl_resp);
+
+        // 민감 키워드 자동 검사 (상담 내역 메시지)
+        try {
+            String fullContent = message != null ? message : "";
+            List<java.util.Map<String, Object>> detected = keywordService.detectSensitiveKeywords(fullContent);
+            if (!detected.isEmpty()) {
+                keywordService.recordRiskPost(
+                        "cnsl_resp",
+                        "CNSL",
+                        cnsl_Reg.getCnslId(),
+                        fullContent,
+                        detected,
+                        cnsl_Reg.getCnslerId() != null ? cnsl_Reg.getCnslerId().getMemberId() : null
+                );
+                log.warn("⚠️ 민감 키워드 감지된 상담 거절 메시지: cnslId={}, 키워드 개수={}", cnsl_Reg.getCnslId(), detected.size());
+            }
+        } catch (Exception e) {
+            log.warn("민감 키워드 상담 거절 메시지 감지/기록 실패: cnslId={}, err={}", cnslId, e.getMessage());
+        }
     }
 
     // =========== ADMIN ===========

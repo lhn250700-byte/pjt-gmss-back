@@ -200,21 +200,36 @@ public class BbsController {
     // ========================================
 
     @GetMapping("/api/bbs/{id}/comments")
-    @Operation(summary = "댓글 목록", description = "해당 게시글의 댓글 목록")
+    @Operation(summary = "댓글 목록", description = "해당 게시글의 댓글 목록 (좋아요/싫어요 건수·대댓글 parent_cmt_id 포함)")
     public ResponseEntity<?> getComments(@PathVariable("id") Integer id) {
-        return ResponseEntity.ok(bbsService.getComments(id));
+        return ResponseEntity.ok(bbsService.getCommentsWithMeta(id));
     }
 
     @PostMapping("/api/bbs/{id}/comments")
-    @Operation(summary = "댓글 작성", description = "해당 게시글에 댓글 작성")
+    @Operation(summary = "댓글 작성", description = "해당 게시글에 댓글 작성. body에 parent_cmt_id 넣으면 대댓글")
     public ResponseEntity<?> addComment(
             @PathVariable("id") Integer id,
-            @RequestBody Map<String, String> body,
+            @RequestBody Map<String, Object> body,
             @RequestHeader(value = "X-User-Id", required = false) String memberId) {
         try {
-            String userId = memberId != null ? memberId : "anonymous";
-            String content = body != null ? body.get("content") : null;
-            Bbs_Comment comment = bbsService.addComment(id, userId, content);
+            if (memberId == null || memberId.isBlank() || "anonymous".equalsIgnoreCase(memberId.trim())) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                    Map.of("error", "로그인 후 이용해 주세요."));
+            }
+            String userId = memberId.trim();
+            String content = body != null && body.get("content") != null ? String.valueOf(body.get("content")) : null;
+            Integer parentCmtId = null;
+            if (body != null && body.get("parent_cmt_id") != null) {
+                Object p = body.get("parent_cmt_id");
+                if (p instanceof Number) {
+                    parentCmtId = ((Number) p).intValue();
+                } else {
+                    try {
+                        parentCmtId = Integer.parseInt(String.valueOf(p));
+                    } catch (NumberFormatException ignored) { /* no parent */ }
+                }
+            }
+            Bbs_Comment comment = bbsService.addComment(id, userId, content, parentCmtId);
             return ResponseEntity.status(HttpStatus.CREATED).body(
                 Map.of("message", "댓글이 작성되었습니다", "data", comment)
             );
@@ -222,6 +237,27 @@ public class BbsController {
             return ResponseEntity.badRequest().body(
                 Map.of("error", e.getMessage())
             );
+        }
+    }
+
+    @PostMapping("/api/bbs/comments/{cmtId}/like")
+    @Operation(summary = "댓글 좋아요/싫어요", description = "댓글에 좋아요(true) 또는 싫어요(false). 로그인 필수.")
+    public ResponseEntity<?> toggleCommentLike(
+            @PathVariable("cmtId") Integer cmtId,
+            @RequestBody Map<String, Boolean> body,
+            @RequestHeader(value = "X-User-Id", required = false) String memberId) {
+        try {
+            if (memberId == null || memberId.isBlank() || "anonymous".equalsIgnoreCase(memberId.trim())) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                    Map.of("error", "로그인 후 이용해 주세요."));
+            }
+            boolean isLike = body != null && body.getOrDefault("is_like", true);
+            bbsService.toggleCommentLike(cmtId, memberId.trim(), isLike);
+            return ResponseEntity.ok(Map.of(
+                    "message", "처리되었습니다",
+                    "likeCounts", bbsService.getCommentLikeCounts(cmtId)));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 

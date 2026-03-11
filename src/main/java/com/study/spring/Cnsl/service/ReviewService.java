@@ -7,6 +7,7 @@ import com.study.spring.Cnsl.repository.CnslRepository;
 import com.study.spring.Cnsl.repository.CnslReviewRepository;
 import com.study.spring.Member.entity.Member;
 import com.study.spring.Member.repository.MemberRepository;
+import com.study.spring.keyword.service.KeywordService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -26,6 +27,7 @@ public class ReviewService {
     private final CnslReviewRepository reviewRepository;
     private final MemberRepository memberRepository;
     private final CnslRepository cnslRepository;
+    private final KeywordService keywordService;
 
     /**
      * 리뷰 작성
@@ -56,6 +58,27 @@ public class ReviewService {
         
         Cnsl_Review saved = reviewRepository.save(review);
         log.info("리뷰 작성 완료: reviewId={}, cnslId={}, memberId={}", saved.getReviewId(), cnslId, memberId);
+
+        // 민감 키워드 자동 검사 (상담 내역: 리뷰)
+        try {
+            String fullContent = (title != null ? title : "") + " " + (content != null ? content : "");
+            List<Map<String, Object>> detected = keywordService.detectSensitiveKeywords(fullContent);
+            if (!detected.isEmpty()) {
+                keywordService.recordRiskPost(
+                        "cnsl_review",
+                        "CNSL",
+                        cnsl.getCnslId(),
+                        fullContent,
+                        detected,
+                        memberId
+                );
+                log.warn("⚠️ 민감 키워드 감지된 리뷰: cnslId={}, reviewId={}, 키워드 개수={}",
+                        cnsl.getCnslId(), saved.getReviewId(), detected.size());
+            }
+        } catch (Exception e) {
+            log.warn("민감 키워드 리뷰 감지/기록 실패: cnslId={}, reviewId={}, err={}",
+                    cnsl.getCnslId(), saved.getReviewId(), e.getMessage());
+        }
         
         return saved;
     }

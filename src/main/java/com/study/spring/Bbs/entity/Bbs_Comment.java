@@ -44,6 +44,9 @@ public class Bbs_Comment {
     private Member memberId;
 
 	private String content;
+	/** 대댓글: 상위 댓글 cmt_id (null이면 루트 댓글) */
+	@Column(name = "parent_cmt_id")
+	private Integer parentCmtId;
 	@Column(name="del_yn")
 	private String delYn = "N";
 	
