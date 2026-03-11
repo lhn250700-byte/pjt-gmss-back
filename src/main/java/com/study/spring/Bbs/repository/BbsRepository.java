@@ -40,6 +40,7 @@ public interface BbsRepository extends JpaRepository<Bbs, Integer> {
                      group by cmt_id) cl_sum on c.cmt_id = cl_sum.cmt_id
         and COALESCE(c.del_yn, 'N') = 'N'
         where COALESCE(b.del_yn, 'N') = 'N'
+		and b.bbs_div <> 'NOTI'
         and (
             (:period = 'realtime'
                 and b.created_at >= NOW() - INTERVAL '1 day')
@@ -110,8 +111,8 @@ public interface BbsRepository extends JpaRepository<Bbs, Integer> {
 			order by bc.created_at DESC
 			""", countQuery = """
 			select count(*)
-			from bbs b
-			where b.member_id = :memberId
+			from bbs_comment bc
+			where bc.member_id = :memberId
 			""",nativeQuery = true)
 	Page<CommentListDto> getCommentListByMemberId(@Param("memberId") String memberId, Pageable pageable);
 
