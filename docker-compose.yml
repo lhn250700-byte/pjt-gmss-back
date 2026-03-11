@@ -1,7 +1,7 @@
 services:
   spring:
     build:
-      context: ./pjt-gmss-back
+      context: .
     container_name: gmss-spring
     environment:
       - CORS_ORIGINS=https://testchat-alpha.vercel.app
