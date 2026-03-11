@@ -14,6 +14,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -64,13 +65,21 @@ public class  JWTCheckFilter extends OncePerRequestFilter {
         String authHeaderStr = request.getHeader("Authorization");
         log.info("Authorization Header: " + (authHeaderStr != null ? authHeaderStr.substring(0, Math.min(50, authHeaderStr.length())) + "..." : "null"));
 
-        // Authorization 헤더가 없으면 인증 실패 처리
-        if (authHeaderStr == null || !authHeaderStr.startsWith("Bearer ")) {
-            log.error("JWT Check Error: Authorization header is missing or invalid");
-            log.error("Received header: " + authHeaderStr);
+        String accessToken = null;
+        if (authHeaderStr != null && authHeaderStr.startsWith("Bearer ")) {
+            accessToken = authHeaderStr.substring(7);
+        }
+        if ((accessToken == null || accessToken.isBlank()) && request.getCookies() != null) {
+            accessToken = Arrays.stream(request.getCookies())
+                    .filter(c -> "accessToken".equals(c.getName()))
+                    .map(c -> c.getValue())
+                    .findFirst()
+                    .orElse(null);
+        }
+        if (accessToken == null || accessToken.isBlank()) {
             Gson gson = new Gson();
-            String msg = gson.toJson(Map.of("error", "ERROR_ACCESS_TOKEN", "message", "Authorization header가 없거나 형식이 올바르지 않습니다."));
-            response.setContentType("application/json");
+            String msg = gson.toJson(Map.of("error", "ERROR_ACCESS_TOKEN", "message", "accessToken이 없습니다."));
+            response.setContentType("application/json;charset=UTF-8");
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             PrintWriter printWriter = response.getWriter();
             printWriter.println(msg);
@@ -79,8 +88,6 @@ public class  JWTCheckFilter extends OncePerRequestFilter {
         }
 
         try {
-            //Bearer accestoken...
-            String accessToken = authHeaderStr.substring(7);
             Map<String, Object> claims = JWTUtil.validateToken(accessToken);
 
             log.info("JWT claims: " + claims);
@@ -91,6 +98,7 @@ public class  JWTCheckFilter extends OncePerRequestFilter {
             String password = (String) claims.get("password");
             String nickname = (String) claims.get("nickname");
             Boolean social = (Boolean) claims.get("social");
+            @SuppressWarnings("unchecked")
             List<String> roleNames = (List<String>) claims.get("roleNames");
             
             if (nickname == null) {

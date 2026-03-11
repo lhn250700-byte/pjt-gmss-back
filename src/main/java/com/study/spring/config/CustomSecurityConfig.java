@@ -1,5 +1,6 @@
 	package com.study.spring.config;
 
+	import java.util.Arrays;
 	import java.util.List;
 
 	import org.springframework.context.annotation.Bean;
@@ -75,7 +76,20 @@
 		public CorsConfigurationSource corsConfigurationSource() {
 			CorsConfiguration config = new CorsConfiguration();
 
-			config.setAllowedOriginPatterns(List.of("*")); // 모든 Origin 허용
+			// HttpOnly 쿠키 인증 사용 시 allowCredentials=true 이므로 Origin은 * 허용 불가.
+			// 운영(Vercel) 도메인은 환경변수로 주입하고, 로컬 개발 도메인은 기본값으로 포함.
+			String env = System.getenv("CORS_ORIGINS");
+			List<String> defaults = List.of(
+					"http://localhost:5173",
+					"http://127.0.0.1:5173"
+			);
+			List<String> origins = (env == null || env.isBlank())
+					? defaults
+					: Arrays.stream(env.split(","))
+							.map(String::trim)
+							.filter(s -> !s.isBlank())
+							.toList();
+			config.setAllowedOrigins(origins);
 
 			// config.setAllowedOrigins(
 			// 		List.of(
@@ -85,10 +99,10 @@
 			// 		);
 
 
-			config.setAllowCredentials(true);              // 반드시 false 쿠키인증이 필요시 true
+			config.setAllowCredentials(true);
 			config.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
 			config.setAllowedHeaders(List.of("*"));  // 모든 헤더 허용 (CORS 프리플라이트 요청 처리)
-			config.setExposedHeaders(List.of("Authorization"));  // 클라이언트에서 접근 가능한 헤더
+			config.setExposedHeaders(List.of("Set-Cookie", "Authorization"));
 			config.setMaxAge(3600L);  // 프리플라이트 요청 캐시 시간 (1시간)
 
 			UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

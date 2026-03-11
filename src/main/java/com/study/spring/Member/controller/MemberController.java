@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import com.study.spring.Member.entity.Member;
 
@@ -105,9 +104,17 @@ public class MemberController {
 			refreshTokenCookie.setHttpOnly(true);
 			refreshTokenCookie.setPath("/");
 			refreshTokenCookie.setMaxAge(60 * 60 * 24); // 24시간
-			refreshTokenCookie.setAttribute("SameSite", "Lax");
-			// refreshTokenCookie.setSecure(true); // 프로덕션 환경에서 활성화 권장
+			refreshTokenCookie.setAttribute("SameSite", "None");
+			refreshTokenCookie.setSecure(true);
 			response.addCookie(refreshTokenCookie);
+
+			Cookie accessTokenCookie = new Cookie("accessToken", newAccessToken);
+			accessTokenCookie.setHttpOnly(true);
+			accessTokenCookie.setPath("/");
+			accessTokenCookie.setMaxAge(60 * 10); // 10분
+			accessTokenCookie.setAttribute("SameSite", "None");
+			accessTokenCookie.setSecure(true);
+			response.addCookie(accessTokenCookie);
 
 			// 5) 응답 반환
 			Map<String, Object> responseBody = new HashMap<>();

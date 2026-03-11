@@ -54,25 +54,41 @@ public class APILoginSuccessHandler implements AuthenticationSuccessHandler {
 		
 		
 //		httponly
+		jakarta.servlet.http.Cookie accessTokenCookie =
+				new jakarta.servlet.http.Cookie("accessToken", accessToken);
+		accessTokenCookie.setHttpOnly(true);
+		accessTokenCookie.setPath("/");
+		accessTokenCookie.setMaxAge(60 * 10); // 10분
+		accessTokenCookie.setAttribute("SameSite", "None");
+		accessTokenCookie.setSecure(true);
+		response.addCookie(accessTokenCookie);
+
 		jakarta.servlet.http.Cookie refreshTokenCookie = 
 				new jakarta.servlet.http.Cookie("refreshToken", refreshToken);
 		refreshTokenCookie.setHttpOnly(true);
 		refreshTokenCookie.setPath("/");
 		refreshTokenCookie.setMaxAge(60*60*24);
-		refreshTokenCookie.setAttribute("SameSite", "Lax"); // SameStie = Strict,Lax,None
+		refreshTokenCookie.setAttribute("SameSite", "None"); // SameStie = Strict,Lax,None
+		refreshTokenCookie.setSecure(true);
 		response.addCookie(refreshTokenCookie);
 
 		claims.put("accessToken",accessToken);
 
 		// 소셜 로그인 → 추가정보 입력 페이지 이동
 		if (isSocialLogin) {
+			String frontendBase = System.getenv("FRONTEND_BASE_URL");
+			if (frontendBase == null || frontendBase.isBlank()) {
+				frontendBase = "http://localhost:5173";
+			}
+			if (frontendBase.endsWith("/")) frontendBase = frontendBase.substring(0, frontendBase.length() - 1);
+
 			if (memberDto.getNickname().startsWith("social_")) {
 				log.info(memberDto);
-				response.sendRedirect("http://localhost:5173/member/kakao-additional");
+				response.sendRedirect(frontendBase + "/member/kakao-additional");
 				return;
 			}
 
-			response.sendRedirect("http://localhost:5173");
+			response.sendRedirect(frontendBase);
 			return;
 		}
 

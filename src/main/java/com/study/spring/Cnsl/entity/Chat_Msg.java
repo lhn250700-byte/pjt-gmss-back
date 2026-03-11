@@ -50,5 +50,6 @@ public class Chat_Msg {
 	private String content;
 	
 	@CreationTimestamp
-	private LocalDateTime created_at;
+	@Column(name = "created_at")
+	private LocalDateTime createdAt;
 }
