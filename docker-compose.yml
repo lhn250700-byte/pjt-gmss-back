@@ -4,8 +4,8 @@ services:
       context: .
     container_name: gmss-spring
     environment:
-      - CORS_ORIGINS=https://testchat-alpha.vercel.app
-      - FRONTEND_BASE_URL=https://testchat-alpha.vercel.app
+      - CORS_ORIGINS=https://gmss.site,https://www.gmss.site,https://testchat-alpha.vercel.app
+      - FRONTEND_BASE_URL=https://www.gmss.site
       # 필요하면 여기서 DB/testchatpy base-url도 환경변수로 주입(프로젝트 설정에 맞게)
     restart: always
     networks: [gmss]
