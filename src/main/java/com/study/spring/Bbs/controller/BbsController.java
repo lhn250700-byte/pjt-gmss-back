@@ -29,6 +29,7 @@ import java.util.Map;
 @RestController
 @Tag(name = "게시판", description = "게시판 CRUD 및 인기글 API")
 public class BbsController {
+	// 하이요
 	@Autowired
 	BbsService bbsService;
 
