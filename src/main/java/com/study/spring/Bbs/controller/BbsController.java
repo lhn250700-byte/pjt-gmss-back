@@ -200,13 +200,13 @@ public class BbsController {
     // ========================================
 
     @GetMapping("/api/bbs/{id}/comments")
-    @Operation(summary = "댓글 목록", description = "해당 게시글의 댓글 목록 (좋아요/싫어요 건수·대댓글 parent_cmt_id 포함)")
+    @Operation(summary = "댓글 목록", description = "해당 게시글의 댓글 목록 (좋아요/싫어요 건수 포함)")
     public ResponseEntity<?> getComments(@PathVariable("id") Integer id) {
         return ResponseEntity.ok(bbsService.getCommentsWithMeta(id));
     }
 
     @PostMapping("/api/bbs/{id}/comments")
-    @Operation(summary = "댓글 작성", description = "해당 게시글에 댓글 작성. body에 parent_cmt_id 넣으면 대댓글")
+    @Operation(summary = "댓글 작성", description = "해당 게시글에 댓글 작성")
     public ResponseEntity<?> addComment(
             @PathVariable("id") Integer id,
             @RequestBody Map<String, Object> body,
@@ -218,18 +218,7 @@ public class BbsController {
             }
             String userId = memberId.trim();
             String content = body != null && body.get("content") != null ? String.valueOf(body.get("content")) : null;
-            Integer parentCmtId = null;
-            if (body != null && body.get("parent_cmt_id") != null) {
-                Object p = body.get("parent_cmt_id");
-                if (p instanceof Number) {
-                    parentCmtId = ((Number) p).intValue();
-                } else {
-                    try {
-                        parentCmtId = Integer.parseInt(String.valueOf(p));
-                    } catch (NumberFormatException ignored) { /* no parent */ }
-                }
-            }
-            Bbs_Comment comment = bbsService.addComment(id, userId, content, parentCmtId);
+            Bbs_Comment comment = bbsService.addComment(id, userId, content);
             return ResponseEntity.status(HttpStatus.CREATED).body(
                 Map.of("message", "댓글이 작성되었습니다", "data", comment)
             );

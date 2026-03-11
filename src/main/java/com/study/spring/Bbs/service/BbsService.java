@@ -277,7 +277,7 @@ public class BbsService {
     }
 
     /**
-     * 댓글 목록 + 좋아요/싫어요 건수 + parentCmtId (프론트 연동용)
+     * 댓글 목록 + 좋아요/싫어요 건수 (프론트 연동용)
      */
     public List<Map<String, Object>> getCommentsWithMeta(Integer bbsId) {
         List<Bbs_Comment> list = getComments(bbsId);
@@ -290,7 +290,6 @@ public class BbsService {
             row.put("cmt_id", c.getCmt_id());
             row.put("content", c.getContent());
             row.put("created_at", c.getCreated_at());
-            row.put("parent_cmt_id", c.getParentCmtId());
             if (c.getMemberId() != null) {
                 Map<String, Object> m = new HashMap<>();
                 m.put("memberId", c.getMemberId().getMemberId());
@@ -306,11 +305,6 @@ public class BbsService {
 
     @Transactional
     public Bbs_Comment addComment(Integer bbsId, String memberIdStr, String content) {
-        return addComment(bbsId, memberIdStr, content, null);
-    }
-
-    @Transactional
-    public Bbs_Comment addComment(Integer bbsId, String memberIdStr, String content, Integer parentCmtId) {
         Bbs bbs = bbsRepository.findById(bbsId)
                 .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다"));
         Member member = memberRepository.findById(memberIdStr)
@@ -318,31 +312,18 @@ public class BbsService {
         if (content == null || content.isBlank()) {
             throw new IllegalArgumentException("댓글 내용을 입력해 주세요.");
         }
-        Integer parentId = null;
-        if (parentCmtId != null) {
-            Bbs_Comment parent = bbsCommentRepository.findById(parentCmtId)
-                    .orElseThrow(() -> new IllegalArgumentException("상위 댓글을 찾을 수 없습니다"));
-            if (parent.getBbsId() == null || !parent.getBbsId().getBbsId().equals(bbsId)) {
-                throw new IllegalArgumentException("같은 게시글의 댓글에만 답글을 달 수 있습니다.");
-            }
-            if ("Y".equals(parent.getDelYn())) {
-                throw new IllegalArgumentException("삭제된 댓글에는 답글을 달 수 없습니다.");
-            }
-            parentId = parentCmtId;
-        }
         Bbs_Comment comment = Bbs_Comment.builder()
                 .bbsId(bbs)
                 .memberId(member)
                 .content(content.trim())
-                .parentCmtId(parentId)
                 .delYn("N")
                 .build();
         Bbs_Comment saved = bbsCommentRepository.save(comment);
-        log.info("댓글 작성: bbsId={}, cmtId={}, parentCmtId={}", bbsId, saved.getCmt_id(), parentId);
+        log.info("댓글 작성: bbsId={}, cmtId={}", bbsId, saved.getCmt_id());
 
         // 민감 키워드 자동 검사 (댓글)
         try {
-            String fullContent = "댓글(cmtId=" + saved.getCmt_id() + ", parentCmtId=" + parentId + "): " + saved.getContent();
+            String fullContent = "댓글(cmtId=" + saved.getCmt_id() + "): " + saved.getContent();
             List<Map<String, Object>> detected = keywordService.detectSensitiveKeywords(fullContent);
             if (!detected.isEmpty()) {
                 keywordService.recordRiskPost(
