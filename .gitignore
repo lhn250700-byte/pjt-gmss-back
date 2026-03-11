@@ -286,7 +286,8 @@ replay_pid*
 .LSOverride
 
 # Icon must end with two \r
-Icon
+Icon
+
 
 # Thumbnails
 ._*
@@ -419,3 +420,4 @@ gradle-app.setting
 
 desktop.ini
 application.properties
+src/main/resources/application.properties
