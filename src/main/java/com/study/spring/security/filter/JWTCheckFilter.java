@@ -39,7 +39,7 @@ public class JWTCheckFilter extends OncePerRequestFilter {
                 path.equals("/api/centers") ||
                 path.startsWith("/api/centers/") ||
                 path.startsWith("/api/bbs/") ||
-                path.equals("/api/bbs") ||
+                path.startsWith("/api/bbs") ||
                 path.equals("/api/bbs_popularPostRealtimeList")
         ) {
             log.info("JWT filter skip for path: {}", path);
