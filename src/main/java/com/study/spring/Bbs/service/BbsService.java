@@ -339,6 +339,27 @@ public class BbsService {
                 .build();
         Bbs_Comment saved = bbsCommentRepository.save(comment);
         log.info("댓글 작성: bbsId={}, cmtId={}, parentCmtId={}", bbsId, saved.getCmt_id(), parentId);
+
+        // 민감 키워드 자동 검사 (댓글)
+        try {
+            String fullContent = "댓글(cmtId=" + saved.getCmt_id() + ", parentCmtId=" + parentId + "): " + saved.getContent();
+            List<Map<String, Object>> detected = keywordService.detectSensitiveKeywords(fullContent);
+            if (!detected.isEmpty()) {
+                keywordService.recordRiskPost(
+                        "bbs_comment",
+                        (bbs.getBbs_div() != null && !bbs.getBbs_div().isBlank()) ? bbs.getBbs_div() : "BBS",
+                        bbs.getBbsId() != null ? bbs.getBbsId().longValue() : bbsId.longValue(),
+                        fullContent,
+                        detected,
+                        memberIdStr
+                );
+                log.warn("⚠️ 민감 키워드 감지된 댓글: bbsId={}, cmtId={}, 키워드 개수={}", bbsId, saved.getCmt_id(), detected.size());
+            }
+        } catch (Exception e) {
+            // 댓글 저장은 성공시키되, 감지 기록 실패로 전체 트랜잭션을 깨지 않도록 보호
+            log.warn("민감 키워드 댓글 감지/기록 실패: bbsId={}, cmtId={}, err={}", bbsId, saved.getCmt_id(), e.getMessage());
+        }
+
         return saved;
     }
 
