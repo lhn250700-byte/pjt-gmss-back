@@ -125,4 +125,34 @@ docker exec gmss-nginx ls -la /etc/nginx/conf.d/
 docker exec gmss-nginx grep "location /api/" /etc/nginx/conf.d/default.conf
 ```
 
+---
+
+## 6. gmss.site 요청이 백엔드가 아닌 Vercel로 가는 경우 (307 Redirect)
+
+**증상**: `curl -I "https://gmss.site/api/..."` 또는 브라우저에서 `https://gmss.site` 호출 시  
+응답이 **307 Temporary Redirect**, **Server: Vercel**, **Location: https://www.gmss.site/...** 로 나옴.
+
+**원인**: 도메인 **gmss.site** 가 DNS 또는 호스팅 설정상 **Vercel**로 연결되어 있음.  
+Vercel이 apex(gmss.site)를 www(www.gmss.site)로 307 리다이렉트하고 있어, API 요청이 실제 백엔드(AWS Nginx/Spring)에 도달하지 않음.  
+→ Nginx CORS 설정을 해도 요청이 Nginx에 오지 않으므로 CORS/Preflight 오류가 계속 남.
+
+**해결**:
+
+1. **DNS에서 API 도메인을 백엔드 서버로 연결**
+   - **gmss.site** (apex): A 레코드를 **백엔드 서버 공인 IP**(예: AWS EC2)로 설정.
+   - 또는 **api.gmss.site** 서브도메인만 백엔드로 쓰고, A/CNAME으로 백엔드 서버를 가리키도록 설정.
+   - 그러면 `https://gmss.site` 또는 `https://api.gmss.site` 요청이 Vercel이 아닌 **AWS Nginx**로 감.
+
+2. **Vercel에서 gmss.site(apex) 제거**
+   - Vercel 프로젝트 도메인 설정에서 **gmss.site** (apex)를 제거하거나, “Redirect to www”가 적용되지 않도록 함.
+   - 프론트는 **www.gmss.site** 만 Vercel에 연결하고, **gmss.site** 는 백엔드 전용으로 둠.
+
+3. **SSL**
+   - 백엔드 서버(AWS)에서 **gmss.site** 또는 **api.gmss.site** 용 인증서를 사용 중이어야 함 (기존 certbot 사용 시 해당 도메인으로 발급).
+
+4. **프론트엔드 API Base URL**
+   - 백엔드를 **api.gmss.site** 로 쓰기로 했다면, 프론트의 `VITE_API_BASE_URL`(또는 동일 설정)을 `https://api.gmss.site` 로 변경.
+
+정리: **gmss.site → Vercel** 이면 CORS 설정과 무관하게 API가 백엔드에 도달하지 않으므로, **gmss.site(또는 api.gmss.site)를 DNS에서 백엔드 IP로 연결**하는 것이 필수입니다.
+
 이 순서로 확인하면 CORS/Preflight 오류 원인을 빠르게 좁힐 수 있습니다.
