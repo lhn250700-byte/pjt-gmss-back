@@ -1,3 +1,7 @@
+# 실행: cd pjt-gmss-back 후 docker compose up -d --build
+# 첫 배포 시: 인증서 발급 전에는 nginx default.conf에서 443 server 블록을 주석 처리하고
+# 80만 띄운 뒤 certbot 발급 후 443 복구하고 docker compose restart nginx
+
 services:
   spring:
     build:

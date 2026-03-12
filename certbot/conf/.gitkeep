@@ -1,0 +1,1 @@
+# Let's Encrypt certs go here (live/, archive/, renewal/); keep for Docker volume

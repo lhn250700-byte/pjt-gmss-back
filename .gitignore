@@ -286,7 +286,7 @@ replay_pid*
 .LSOverride
 
 # Icon must end with two \r
-Icon
+Icon
 
 # Thumbnails
 ._*
@@ -419,3 +419,8 @@ gradle-app.setting
 
 desktop.ini
 application.properties
+
+# Let's Encrypt (certbot) - do not commit certificates
+certbot/conf/live/
+certbot/conf/archive/
+certbot/conf/renewal/
