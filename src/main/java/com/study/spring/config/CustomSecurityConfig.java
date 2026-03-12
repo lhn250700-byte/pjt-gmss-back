@@ -45,10 +45,11 @@
 			http.sessionManagement(sessionConfig ->  sessionConfig.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
 			http.formLogin(config -> {
-				  config.loginPage("/api/member/login");
+				  // 프론트에서 호출하는 로그인 엔드포인트와 일치시키기
+				  config.loginPage("/api/member/login");          // GET: 로그인 페이지(현재는 API로 사용)
+				  config.loginProcessingUrl("/api/member/login"); // POST: username/password 처리
 				  config.successHandler(new APILoginSuccessHandler());
 				  config.failureHandler(new APILoginFailHandler());
-
 			});
 
 			 http.authorizeHttpRequests(auth -> auth.requestMatchers( "/",
