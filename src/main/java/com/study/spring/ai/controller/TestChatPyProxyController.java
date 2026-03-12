@@ -63,7 +63,8 @@ public class TestChatPyProxyController {
                 // 커스텀 헤더(X-User-Email) 없이 query로 member_id 전달
                 .uri(uriBuilder -> uriBuilder
                         .path("/api/ai/chat/{id}")
-                        .queryParam("member_id", principal.getEmail())
+                        // username = Spring Security User의 username(=email)
+                        .queryParam("member_id", principal.getUsername())
                         .build(cnslId))
                 .retrieve()
                 .body(Object.class);
@@ -78,7 +79,7 @@ public class TestChatPyProxyController {
         Object data = restClient.post()
                 .uri(uriBuilder -> uriBuilder
                         .path("/api/ai/chat/{id}")
-                        .queryParam("member_id", principal.getEmail())
+                        .queryParam("member_id", principal.getUsername())
                         .build(cnslId))
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(body)
@@ -94,7 +95,7 @@ public class TestChatPyProxyController {
         Object data = restClient.post()
                 .uri(uriBuilder -> uriBuilder
                         .path("/api/ai/chat/{id}/summary")
-                        .queryParam("member_id", principal.getEmail())
+                        .queryParam("member_id", principal.getUsername())
                         .build(cnslId))
                 .retrieve()
                 .body(Object.class);
