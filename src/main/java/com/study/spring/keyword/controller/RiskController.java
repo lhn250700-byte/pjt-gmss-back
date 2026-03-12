@@ -49,6 +49,14 @@ public class RiskController {
         ));
     }
 
+    @GetMapping("/{id}")
+    @Operation(summary = "위험 게시물 단건 조회", description = "ID로 위험 게시물 상세 조회 (상담사 게시글 보기용)")
+    public ResponseEntity<?> getRiskById(@PathVariable("id") Long id) {
+        return riskRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @GetMapping
     @Operation(summary = "위험 게시물 목록", description = "민감 키워드 감지된 게시물 목록 조회")
     public ResponseEntity<Page<BbsRisk>> getRisks(
