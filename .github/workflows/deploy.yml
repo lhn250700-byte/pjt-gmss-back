@@ -1,0 +1,36 @@
+# pjt-gmss-back 자동 배포
+# main 브랜치 push 시 배포 서버에 SSH 접속 후 git pull + docker compose up -d --build
+#
+# 필수 GitHub Secrets:
+#   DEPLOY_SSH_KEY  - 배포 서버 SSH 개인키 (전체 PEM 내용)
+#   DEPLOY_HOST     - 배포 서버 호스트 (예: gmss.site 또는 IP)
+#   DEPLOY_USER     - SSH 사용자 (예: ubuntu, root)
+# 선택: DEPLOY_PORT (기본 22), DEPLOY_PATH (저장소 클론 경로, 기본 ~/pjt-gmss-back)
+
+name: Deploy to server
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:  # 수동 실행 가능
+
+jobs:
+  deploy:
+    name: Build and deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || 22 }}
+          script: |
+            set -e
+            DEPLOY_PATH="${{ secrets.DEPLOY_PATH || '~/pjt-gmss-back' }}"
+            cd "${DEPLOY_PATH/#\~/$HOME}" || { echo "Directory not found: $DEPLOY_PATH"; exit 1; }
+            git fetch origin main
+            git reset --hard origin/main
+            docker compose up -d --build
+            docker image prune -f
