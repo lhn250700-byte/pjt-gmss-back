@@ -90,15 +90,16 @@ public class BbsController {
     // ========================================
     
     @PostMapping("/api/bbs")
-    @Operation(summary = "게시글 작성", description = "새 게시글 작성 (민감 키워드 자동 검사). X-User-Id로 작성자 회원 설정.")
+    @Operation(summary = "게시글 작성", description = "새 게시글 작성 (민감 키워드 자동 검사). JWT에서 회원 정보를 읽어 작성자를 설정합니다.")
     public ResponseEntity<?> createPost(
             @RequestBody Bbs bbs,
-            @RequestHeader(value = "X-User-Id", required = false) String memberId,
+            @AuthenticationPrincipal MemberDto member,
             HttpServletRequest request) {
         if (bbs.getMbti() == null) {
             bbs.setMbti("");
         }
         try {
+            String memberId = member != null ? member.getEmail() : null;
             Bbs saved = bbsService.createPost(bbs, memberId);
             
             // 활동 로그 기록
@@ -149,14 +150,14 @@ public class BbsController {
     public ResponseEntity<?> updatePost(
             @PathVariable("id") Integer id,
             @RequestBody Bbs updateData,
-            @RequestHeader(value = "X-User-Id", required = false) String memberId,
+            @AuthenticationPrincipal MemberDto member,
             HttpServletRequest request) {
         
         try {
             Bbs updated = bbsService.updatePost(id, updateData);
             
             // 활동 로그 기록
-            String userId = memberId != null ? memberId : "anonymous";
+            String userId = member != null ? member.getEmail() : "anonymous";
             activityLogger.logActivity(userId, null, "USER", "update", "post", 
                 id.longValue(), "게시글 수정", request);
             
@@ -174,14 +175,14 @@ public class BbsController {
     @Operation(summary = "게시글 삭제", description = "게시글 삭제 (소프트 삭제)")
     public ResponseEntity<?> deletePost(
             @PathVariable("id") Integer id,
-            @RequestHeader(value = "X-User-Id", required = false) String memberId,
+            @AuthenticationPrincipal MemberDto member,
             HttpServletRequest request) {
         
         try {
             bbsService.deletePost(id);
             
             // 활동 로그 기록
-            String userId = memberId != null ? memberId : "anonymous";
+            String userId = member != null ? member.getEmail() : "anonymous";
             activityLogger.logActivity(userId, null, "USER", "delete", "post", 
                 id.longValue(), "게시글 삭제", request);
             
@@ -210,9 +211,9 @@ public class BbsController {
     public ResponseEntity<?> addComment(
             @PathVariable("id") Integer id,
             @RequestBody Map<String, String> body,
-            @RequestHeader(value = "X-User-Id", required = false) String memberId) {
+            @AuthenticationPrincipal MemberDto member) {
         try {
-            String userId = memberId != null ? memberId : "anonymous";
+            String userId = member != null ? member.getEmail() : "anonymous";
             String content = body != null ? body.get("content") : null;
             Bbs_Comment comment = bbsService.addComment(id, userId, content);
             return ResponseEntity.status(HttpStatus.CREATED).body(
@@ -229,9 +230,9 @@ public class BbsController {
     @Operation(summary = "댓글 삭제", description = "댓글 삭제 (본인만)")
     public ResponseEntity<?> deleteComment(
             @PathVariable("cmtId") Integer cmtId,
-            @RequestHeader(value = "X-User-Id", required = false) String memberId) {
+            @AuthenticationPrincipal MemberDto member) {
         try {
-            String userId = memberId != null ? memberId : "anonymous";
+            String userId = member != null ? member.getEmail() : "anonymous";
             bbsService.deleteComment(cmtId, userId);
             return ResponseEntity.ok(
                 Map.of("message", "댓글이 삭제되었습니다")
@@ -252,15 +253,15 @@ public class BbsController {
     public ResponseEntity<?> toggleLike(
             @PathVariable("id") Integer id,
             @RequestBody Map<String, Boolean> body,
-            @RequestHeader(value = "X-User-Id", required = false) String memberId) {
+            @AuthenticationPrincipal MemberDto member) {
         try {
-            // 비로그인(헤더 없음 또는 anonymous) 요청 거부
-            if (memberId == null || memberId.isBlank() || "anonymous".equalsIgnoreCase(memberId.trim())) {
+            // 비로그인인 경우 JWT 인증 실패 단계에서 이미 401 처리되지만, 방어적으로 한 번 더 체크
+            if (member == null || member.getEmail() == null || member.getEmail().isBlank()) {
                 return ResponseEntity.status(401).body(
                     Map.of("error", "로그인 후 이용해 주세요.")
                 );
             }
-            String userId = memberId.trim();
+            String userId = member.getEmail();
             boolean isLike = body != null && body.getOrDefault("is_like", true);
             bbsService.toggleLike(id, userId, isLike);
             return ResponseEntity.ok(

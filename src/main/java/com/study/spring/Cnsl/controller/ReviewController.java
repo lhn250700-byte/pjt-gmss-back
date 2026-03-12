@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -28,11 +29,11 @@ public class ReviewController {
     @Operation(summary = "리뷰 작성", description = "상담에 대한 리뷰 작성")
     public ResponseEntity<?> createReview(
             @RequestBody Map<String, Object> body,
-            @RequestHeader(value = "X-User-Id", required = false) String memberId,
+            @AuthenticationPrincipal com.study.spring.Member.dto.MemberDto member,
             HttpServletRequest request) {
         
         try {
-            String userId = memberId != null ? memberId : "anonymous";
+            String userId = member != null ? member.getEmail() : "anonymous";
             Integer cnslId = Integer.valueOf(body.get("cnsl_id").toString());
             String title = (String) body.get("title");
             String content = (String) body.get("content");
@@ -91,11 +92,11 @@ public class ReviewController {
     public ResponseEntity<?> updateReview(
             @PathVariable Integer id,
             @RequestBody Map<String, Object> body,
-            @RequestHeader(value = "X-User-Id", required = false) String memberId,
+            @AuthenticationPrincipal com.study.spring.Member.dto.MemberDto member,
             HttpServletRequest request) {
         
         try {
-            String userId = memberId != null ? memberId : "anonymous";
+            String userId = member != null ? member.getEmail() : "anonymous";
             String title = (String) body.get("title");
             String content = (String) body.get("content");
             Integer evalPt = body.get("eval_pt") != null ? Integer.parseInt(body.get("eval_pt").toString()) : null;
@@ -120,11 +121,11 @@ public class ReviewController {
     @Operation(summary = "리뷰 삭제", description = "리뷰 삭제 (소프트 삭제)")
     public ResponseEntity<?> deleteReview(
             @PathVariable Integer id,
-            @RequestHeader(value = "X-User-Id", required = false) String memberId,
+            @AuthenticationPrincipal com.study.spring.Member.dto.MemberDto member,
             HttpServletRequest request) {
         
         try {
-            String userId = memberId != null ? memberId : "anonymous";
+            String userId = member != null ? member.getEmail() : "anonymous";
             reviewService.deleteReview(id, userId);
             
             // 활동 로그 기록
