@@ -11,13 +11,17 @@ import org.hibernate.type.SqlTypes;
 import java.util.ArrayList;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -39,6 +43,13 @@ public class Member {
 	private boolean social;
 	
 	@ElementCollection(fetch=FetchType.LAZY)
+	@CollectionTable(
+			name = "member_role_list",
+			schema = "public",
+			joinColumns = @JoinColumn(name = "member_member_id")
+	)
+	@Column(name = "role")
+	@Enumerated(EnumType.ORDINAL) // 0=USER, 1=SYSTEM, 2=ADMIN (DB: smallint)
 	@Builder.Default
 	private List<MemberRole> memberRoleList = new ArrayList<>();
 	//private String role; // 1. 상담자, 2. 상담사, 3. 관리자 (Code 테이블 'role' 매핑 )
