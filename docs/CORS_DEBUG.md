@@ -84,9 +84,9 @@ curl -s -D - -X POST "https://gmss.site/api/auth/refresh" \
 
 ## 4. 재배포 후 체크리스트
 
-1. **프론트**: `VITE_API_BASE_URL` 또는 API base URL이 **https** 인지 확인.
+1. **프론트**: `VITE_API_BASE_URL` 또는 API base URL이 **반드시 https** (`https://gmss.site`) 인지 확인. `http://` 로 요청하면 80 포트에서 301 리다이렉트되어 Preflight 오류가 납니다.
 2. **백엔드**: `CORS_ORIGINS`에 `https://www.gmss.site` 포함 여부 확인 (`docker-compose.yml` 등).
-3. **Nginx**: 443 server 블록에서 `/api` 로 오는 **OPTIONS** 가 리다이렉트되지 않고, CORS 헤더가 붙는지 확인.
+3. **Nginx**: 서버에 `nginx/conf.d/00_cors_map.conf`, `nginx/conf.d/default.conf` 가 반영되었는지 확인 후 `docker compose restart nginx` 또는 `docker compose up -d --build` 로 재시작.
 4. 위 **2. curl** 명령으로 OPTIONS/GET 한 번씩 호출해 응답 헤더 확인.
 
 이 순서로 확인하면 CORS/Preflight 오류 원인을 빠르게 좁힐 수 있습니다.
