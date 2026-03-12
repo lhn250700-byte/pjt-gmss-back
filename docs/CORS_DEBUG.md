@@ -89,4 +89,40 @@ curl -s -D - -X POST "https://gmss.site/api/auth/refresh" \
 3. **Nginx**: 서버에 `nginx/conf.d/00_cors_map.conf`, `nginx/conf.d/default.conf` 가 반영되었는지 확인 후 `docker compose restart nginx` 또는 `docker compose up -d --build` 로 재시작.
 4. 위 **2. curl** 명령으로 OPTIONS/GET 한 번씩 호출해 응답 헤더 확인.
 
+---
+
+## 5. 배포 서버에서 설정 반영 여부 확인
+
+배포 서버에 SSH 접속한 뒤, 프로젝트 디렉터리에서 아래 명령으로 확인합니다.  
+(프로젝트 경로 예: `~/pjt-gmss-back`, `/opt/gmss/pjt-gmss-back` — 실제 배포 경로로 `cd` 후 실행.)
+
+```bash
+# 프로젝트 디렉터리로 이동 (실제 경로로 변경. 예: cd /opt/gmss/pjt-gmss-back)
+cd /opt/gmss/pjt-gmss-back
+
+# 1) 00_cors_map.conf 존재 여부
+ls -la nginx/conf.d/00_cors_map.conf
+# 있으면: -rw-r--r-- ... 00_cors_map.conf 처럼 출력
+# 없으면: No such file or directory
+
+# 2) default.conf 에 /api/ location 블록이 있는지
+grep -A 2 "location /api/" nginx/conf.d/default.conf
+# 정상이면 예: "location /api/" 다음에 add_header, if ($request_method = 'OPTIONS') 등이 보임
+
+# 3) CORS 관련 add_header가 들어 있는지
+grep "Access-Control-Allow-Origin" nginx/conf.d/default.conf
+# 정상이면: add_header 'Access-Control-Allow-Origin' $cors_origin always; 가 보임
+
+# 4) 한 번에 요약 확인 (이미 프로젝트 디렉터리에 있을 때)
+echo "=== 00_cors_map.conf ===" && test -f nginx/conf.d/00_cors_map.conf && echo "OK 존재" || echo "없음"
+echo "=== default.conf /api/ 블록 ===" && grep -c "location /api/" nginx/conf.d/default.conf && echo "개 있음 (1이면 정상)"
+```
+
+**Docker 컨테이너 안의 Nginx가 쓰는 설정**을 보고 싶다면 (볼륨 마운트로 호스트와 동일하다면 위와 같음):
+
+```bash
+docker exec gmss-nginx ls -la /etc/nginx/conf.d/
+docker exec gmss-nginx grep "location /api/" /etc/nginx/conf.d/default.conf
+```
+
 이 순서로 확인하면 CORS/Preflight 오류 원인을 빠르게 좁힐 수 있습니다.

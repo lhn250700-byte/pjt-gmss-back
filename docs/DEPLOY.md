@@ -44,4 +44,4 @@
 
 ## 4. 배포 경로를 바꾸는 경우
 
-서버에서 다른 경로에 둔 경우(예: `/opt/pjt-gmss-back`) Secrets에 `DEPLOY_PATH`를 `/opt/pjt-gmss-back`처럼 설정하면 됩니다. `~`는 홈 디렉터리로 치환됩니다.
+서버에서 다른 경로에 둔 경우(예: `/opt/gmss/pjt-gmss-back`) Secrets에 `DEPLOY_PATH`를 `/opt/gmss/pjt-gmss-back`처럼 설정하면 됩니다. `~`는 홈 디렉터리로 치환됩니다.
