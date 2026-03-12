@@ -45,9 +45,8 @@ public class TestChatPyProxyController {
     @PostMapping("/api/testchatpy/chat")
     public ResponseEntity<?> siteChat(@RequestBody Map<String, Object> body,
                                       @AuthenticationPrincipal MemberDto principal) {
-        if (principal == null) return ResponseEntity.status(401).body(Map.of("error", "UNAUTHORIZED"));
+        // 미로그인도 챗봇 이용 가능. 사용자 식별은 JWT/세션만 사용, 커스텀 헤더 없음
         Object data = restClient.post()
-                // testchatpy/chatbot.py: POST /api/site-chat
                 .uri("/api/site-chat")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(body)

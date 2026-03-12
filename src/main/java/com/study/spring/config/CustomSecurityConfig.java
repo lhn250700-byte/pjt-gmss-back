@@ -55,7 +55,8 @@
 			 http.authorizeHttpRequests(auth -> auth.requestMatchers( "/",
 			 "/api/member/signup", "/api/member/login", "/api/auth/refresh",
 			 "/api/auth/signout", "/api/member_InfoNicknameChk", "/api/member/**",
-			 "/api/auth/**", "/api/centers", "/api/centers/**", "/api/bbs**", "/api/bbs/**").permitAll()
+			 "/api/auth/**", "/api/centers", "/api/centers/**", "/api/bbs**", "/api/bbs/**",
+			 "/api/testchatpy/**").permitAll()
 			 .anyRequest().authenticated());
 
 			// 일반 로그인 필터
