@@ -64,7 +64,7 @@ public class CustomSecurityConfig {
                         "/api/auth/**",
                         "/api/centers",
                         "/api/centers/**",
-                        "/api/bbs",
+                        "/api/bbs**",
                         "/api/bbs/**",
                         "/api/bbs_popularPostRealtimeList"
                 ).permitAll()

@@ -1,12 +1,30 @@
 package com.study.spring.Member.service;
 
+import com.study.spring.Bbs.entity.Bbs;
+import com.study.spring.Bbs.entity.Bbs_Comment;
+import com.study.spring.Bbs.entity.Bbs_Like;
+import com.study.spring.Bbs.entity.Cmt_Like;
+import com.study.spring.Bbs.repository.BbsCommentRepository;
+import com.study.spring.Bbs.repository.BbsLikeRepository;
+import com.study.spring.Bbs.repository.BbsRepository;
+import com.study.spring.Bbs.repository.CmtLikeRepository;
+import com.study.spring.Cnsl.entity.Cnsl_Reg;
+import com.study.spring.Cnsl.entity.Cnsl_Resp;
+import com.study.spring.Cnsl.entity.Cnsl_Review;
+import com.study.spring.Cnsl.repository.CnslRepository;
+import com.study.spring.Cnsl.repository.CnslRespRepository;
+import com.study.spring.Cnsl.repository.CnslReviewRepository;
 import com.study.spring.Member.dto.*;
 import com.study.spring.Member.entity.Member;
 import com.study.spring.Member.entity.MemberRole;
 import com.study.spring.Member.repository.MemberInfoRepository;
 import com.study.spring.Member.repository.MemberRepository;
+import com.study.spring.cnslInfo.repository.CnslInfoRepository;
+import com.study.spring.keyword.entity.BbsRisk;
+import com.study.spring.keyword.repository.BbsRiskRepository;
 import com.study.spring.wallet.entity.PointHistory;
 import com.study.spring.wallet.entity.Wallet;
+import com.study.spring.wallet.repository.PaymentRepository;
 import com.study.spring.wallet.repository.PointHistoryRepository;
 import com.study.spring.wallet.repository.WalletRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +36,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,6 +47,18 @@ public class MemberService {
 	private final MemberRepository memberRepository;
 	private final WalletRepository walletRepository;
 	private final PointHistoryRepository pointHistoryRepository;
+	private final CnslInfoRepository cnslInfoRepository;
+	private final PaymentRepository paymentRepository;
+
+	private final BbsRepository bbsRepository;
+	private final BbsCommentRepository bbsCommentRepository;
+	private final BbsLikeRepository bbsLikeRepository;
+	private final CmtLikeRepository cmtLikeRepository;
+	private final CnslRepository cnslRepository;
+	private final CnslRespRepository cnslRespRepository;
+	private final CnslReviewRepository cnslReviewRepository;
+	private final BbsRiskRepository bbsRiskRepository;
+
 
 	public MemberDto getMemberByEmail(String email) {
 		return memberRepository.findByEmail(email)
@@ -233,6 +264,54 @@ public class MemberService {
 				member.changeNickname(membermodifydto.getNickname());
 		}
 	}
+
+	// [회원 탈퇴]
+//	@Transactional
+//	public void deleteMember(String email) {
+//		Member member = memberRepository.findByEmail(email)
+//				.orElseThrow(() -> new IllegalArgumentException("해당 회원을 찾을 수 없습니다. email : " + email));
+//		Member newMember = new Member();
+//		String name = generateDeleteNickname();
+//
+//		newMember.setMemberId("deleted_member" + name);
+//		newMember.setNickname(name);
+//
+//		memberRepository.save(newMember);
+//
+//		if (member.getMemberRoleList().contains(1)) {
+//			cnslInfoRepository.deleteByMemberId(member);
+//		}
+//		pointHistoryRepository.deleteByMemberId(member);
+//		paymentRepository.deleteByMemberId(member);
+//		walletRepository.deleteByMemberId(email);
+//		member.clearRole();
+//
+//		Optional<Bbs> bbs = bbsRepository.findByMemberId(member);
+//		Optional<Bbs_Comment> bbsComment = bbsCommentRepository.findByMemberId(member);
+//		Optional<Bbs_Like> bbsLike = bbsLikeRepository.findByMemberId(member);
+//		Optional<Cmt_Like> cmtLike = cmtLikeRepository.findByMemberId(member);
+//		Optional<Cnsl_Reg> cnslReg = cnslRepository.findByMemberId(member);
+//		Optional<Cnsl_Resp> cnslResp = cnslRespRepository.findByMemberId(member);
+//		Optional<Cnsl_Review> cnslReview = cnslReviewRepository.findByMemberId(member);
+//		Optional<BbsRisk> bbsRisk = bbsRiskRepository.findByMemberId(email);
+//
+//		bbs.ifPresent(b -> b.setMemberId(newMember));
+//		bbsComment.ifPresent(c -> c.setMemberId(newMember));
+//		bbsLike.ifPresent(l -> l.setMemberId(newMember));
+//		cmtLike.ifPresent(cl -> cl.setMemberId(newMember));
+//		cnslReg.ifPresent(r -> r.setMemberId(newMember));
+//		cnslResp.ifPresent(r -> r.setMemberId(newMember));
+//		cnslReview.ifPresent(r -> r.setMemberId(newMember));
+//		bbsRisk.ifPresent(br -> br.setMemberId(newMember.getMemberId()));
+//
+//		memberRepository.delete(member);
+//	}
+//
+//	public String generateDeleteNickname() {
+//		String anonNickname = "탈퇴회원_" + ThreadLocalRandom.current().nextInt(100, 1000)
+//				+ "_" + System.currentTimeMillis() % 10000;
+//		return anonNickname;
+//	}
 
 	// 이 부분을 추가하면 에러가 사라집니다!
 	private void updateCommonInfo(Member member, MemberModifyDto dto) {

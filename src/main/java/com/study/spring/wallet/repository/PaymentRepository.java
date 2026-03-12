@@ -2,6 +2,7 @@ package com.study.spring.wallet.repository;
 
 import java.util.Optional;
 
+import com.study.spring.Member.entity.Member;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,5 +16,6 @@ public interface PaymentRepository extends JpaRepository<Payment, Long>{
 		select * from payment where imp_uid = :orderId
 	""", nativeQuery = true)
 	Optional<Payment> findByOrderId(@Param("orderId") String orderId);
-	
+
+	void deleteByMemberId(Member member);
 }
