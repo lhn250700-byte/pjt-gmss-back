@@ -1,6 +1,7 @@
 package com.study.spring.cnslInfo.repository;
 
 import com.study.spring.Cnsl.dto.cnslPriceDto;
+import com.study.spring.Member.entity.Member;
 import com.study.spring.cnslInfo.entity.CnslInfo;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -28,4 +29,6 @@ public interface CnslInfoRepository extends JpaRepository<CnslInfo, Long> {
 		group by ci.cnsl_tp
     		""", nativeQuery = true)
     List<cnslPriceDto> findCnslPriceWithTypeName(@Param("email") String email);
+
+    void deleteByMemberId(Member member);
 }

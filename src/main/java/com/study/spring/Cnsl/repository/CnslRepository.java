@@ -7,6 +7,7 @@ import java.util.Optional;
 import java.lang.String;
 
 import com.study.spring.Cnsl.dto.*;
+import com.study.spring.Member.entity.Member;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -284,6 +285,7 @@ public interface CnslRepository extends JpaRepository<Cnsl_Reg, Long> {
 			    left join cnsl_info ci on ci.member_id = cr.cnsler_id and ci.cnsl_tp = cr.cnsl_tp
 			    where cr.cnsl_stat not in ('X') -- 상담취소제외
 			    and cr.cnsler_id = :cnslerId
+			    and cr.cnsl_tp <> '1'
 			    and cr.cnsl_dt between :startDate and :endDate
 			    group by cr.cnsler_id, m.nickname, cr.cnsl_tp
 			    order by count(*) desc, cr.cnsl_tp
@@ -562,4 +564,6 @@ public interface CnslRepository extends JpaRepository<Cnsl_Reg, Long> {
 	Optional<CnslDetailDto> findcnslDetail(@Param("cnslId") Long cnslId, @Param("memberId") String memberId);
 
 //	Chat_Msg save(Chat_Msg chatMsg);
+
+	Optional<Cnsl_Reg> findByMemberId(Member member);
 }

@@ -19,4 +19,6 @@ public interface WalletRepository extends JpaRepository<Wallet, String> {
     Optional<Wallet> findByEmail(@Param("email")  String email);
 
 	Optional<Wallet> findByMember(Member member);
+
+    void deleteByMemberId(String memberId);
 }

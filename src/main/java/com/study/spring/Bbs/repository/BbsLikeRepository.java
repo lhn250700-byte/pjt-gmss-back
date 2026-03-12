@@ -1,6 +1,7 @@
 package com.study.spring.Bbs.repository;
 
 import com.study.spring.Bbs.entity.Bbs_Like;
+import com.study.spring.Member.entity.Member;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,4 +17,6 @@ public interface BbsLikeRepository extends JpaRepository<Bbs_Like, Integer> {
 
     @Query("SELECT l FROM Bbs_Like l WHERE l.bbsId.bbsId = :bbsId")
     List<Bbs_Like> findByBbsId(@Param("bbsId") Integer bbsId);
+
+    Optional<Bbs_Like> findByMemberId(Member member);
 }

@@ -1,12 +1,14 @@
 package com.study.spring.Bbs.repository;
 
 import com.study.spring.Bbs.entity.Bbs_Comment;
+import com.study.spring.Member.entity.Member;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 @org.springframework.stereotype.Repository
 public interface BbsCommentRepository extends JpaRepository<Bbs_Comment, Integer> {
@@ -15,4 +17,6 @@ public interface BbsCommentRepository extends JpaRepository<Bbs_Comment, Integer
     @EntityGraph(attributePaths = {"memberId"})
     @Query("SELECT c FROM Bbs_Comment c WHERE c.bbsId.bbsId = :bbsId AND c.delYn = 'N' ORDER BY c.created_at ASC")
     List<Bbs_Comment> findByBbsIdAndDelYnOrderByCreatedAtAsc(@Param("bbsId") Integer bbsId);
+
+    Optional<Bbs_Comment> findByMemberId(Member member);
 }
