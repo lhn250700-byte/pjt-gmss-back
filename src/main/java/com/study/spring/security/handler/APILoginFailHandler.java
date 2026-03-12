@@ -16,13 +16,14 @@ public class APILoginFailHandler implements AuthenticationFailureHandler{
 	@Override
 	public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
 			AuthenticationException exception) throws IOException, ServletException {
-		
+
 		log.info("--------------------------------------------------------");
-		// 인증사용자의 정보
-		log.info("login Fail.....: " + exception );
+		log.info("login Fail.....: {}", exception.getMessage());
 		log.info("--------------------------------------------------------");
-		
-		
+
+		response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+		response.setContentType("application/json;charset=UTF-8");
+		response.getWriter().write("{\"error\":\"LOGIN_FAILED\",\"message\":\"이메일 또는 비밀번호를 확인해주세요.\"}");
 	}
 
 }
