@@ -60,8 +60,11 @@ public class TestChatPyProxyController {
                                        @AuthenticationPrincipal MemberDto principal) {
         if (principal == null) return ResponseEntity.status(401).body(Map.of("error", "UNAUTHORIZED"));
         Object data = restClient.get()
-                .uri("/api/ai/chat/{id}", cnslId)
-                .header("X-User-Email", principal.getEmail())
+                // 커스텀 헤더(X-User-Email) 없이 query로 member_id 전달
+                .uri(uriBuilder -> uriBuilder
+                        .path("/api/ai/chat/{id}")
+                        .queryParam("member_id", principal.getEmail())
+                        .build(cnslId))
                 .retrieve()
                 .body(Object.class);
         return ResponseEntity.ok(data);
@@ -73,8 +76,10 @@ public class TestChatPyProxyController {
                                         @AuthenticationPrincipal MemberDto principal) {
         if (principal == null) return ResponseEntity.status(401).body(Map.of("error", "UNAUTHORIZED"));
         Object data = restClient.post()
-                .uri("/api/ai/chat/{id}", cnslId)
-                .header("X-User-Email", principal.getEmail())
+                .uri(uriBuilder -> uriBuilder
+                        .path("/api/ai/chat/{id}")
+                        .queryParam("member_id", principal.getEmail())
+                        .build(cnslId))
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(body)
                 .retrieve()
@@ -87,8 +92,10 @@ public class TestChatPyProxyController {
                                        @AuthenticationPrincipal MemberDto principal) {
         if (principal == null) return ResponseEntity.status(401).body(Map.of("error", "UNAUTHORIZED"));
         Object data = restClient.post()
-                .uri("/api/ai/chat/{id}/summary", cnslId)
-                .header("X-User-Email", principal.getEmail())
+                .uri(uriBuilder -> uriBuilder
+                        .path("/api/ai/chat/{id}/summary")
+                        .queryParam("member_id", principal.getEmail())
+                        .build(cnslId))
                 .retrieve()
                 .body(Object.class);
         return ResponseEntity.ok(data);
