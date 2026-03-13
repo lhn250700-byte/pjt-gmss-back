@@ -5,6 +5,7 @@ public interface CounselorListDto {
     String getNickname();
     String getProfile();
     String getText();
+    String getImgUrl();
 
     Integer getCate1Cnt();
     Integer getCate2Cnt();
