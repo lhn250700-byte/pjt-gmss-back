@@ -35,21 +35,9 @@ public class Chat_Msg {
 	@Column(name="cnsl_id", nullable = false)
 	private Integer cnslId;
 	
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name="member_id")
-	private Member memberId;
-	
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name="cnsler_id")
-	private Member cnslerId;
-	
-	@Column(nullable = false)
-	private String role;
-	
-	@Column(nullable = false)
-	private String content;
-	
-	@CreationTimestamp
-	@Column(name = "created_at")
-	private LocalDateTime createdAt;
+	// Supabase에서 관리하는 chat_msg는 Spring JPA로 직접 사용하지 않는다.
+	// 과거 구조(단일 content 컬럼)는 제거되었고, 현재는 msg_data(JSONB)를 사용하므로
+	// 이 엔티티는 더 이상 DB 스키마와 일치하지 않는다.
+	// 남아 있는 JPA 메타데이터 때문에 content 컬럼을 조회하는 SQL이 생성되므로,
+	// 전체 엔티티를 비활성화한다.
 }
