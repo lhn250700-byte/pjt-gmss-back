@@ -186,9 +186,11 @@ public class CnslChatApiController {
         if (cnsl == null) return ResponseEntity.status(404).body(Map.of("error", "NOT_FOUND"));
         String summary = body != null ? Objects.toString(body.get("summary"), "") : "";
         Object msgData = body != null ? body.get("msg_data") : null;
-        // 요약 텍스트는 cnsl_reg.cnsl_content 에 저장만 하고,
+        // 요약 텍스트는 AI 상담(cnsl_tp = '3') 인 경우에만 cnsl_reg.cnsl_content 에 저장하고,
         // 상세 msg_data(STT 포함)는 Supabase(chat_msg) 쪽에서 관리한다.
-        if (!summary.isBlank()) cnsl.setCnslContent(summary);
+        if ("3".equals(String.valueOf(cnsl.getCnslTp())) && !summary.isBlank()) {
+            cnsl.setCnslContent(summary);
+        }
         cnslRepository.save(cnsl);
         return ResponseEntity.ok(Map.of("success", true));
     }
