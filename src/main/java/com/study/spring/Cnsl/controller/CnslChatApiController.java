@@ -136,37 +136,8 @@ public class CnslChatApiController {
             ));
         }
 
-        // chat_msg 테이블이 비어있는 경우(화상상담 요약 저장 등) cnsl_reg.cnsl_msg_data(JSON)를 fallback으로 내려줌
-        if (out.isEmpty()) {
-            Cnsl_Reg cnsl = cnslRepository.findById(cnslId).orElse(null);
-            String raw = cnsl != null ? cnsl.getCnslMsgData() : null;
-            if (raw != null && !raw.isBlank()) {
-                try {
-                    Object parsed = objectMapper.readValue(raw, Object.class);
-                    if (parsed instanceof List<?> list) {
-                        int i = 0;
-                        for (Object it : list) {
-                            if (!(it instanceof Map<?, ?> m)) continue;
-                            String speaker = Objects.toString(m.get("speaker"), "user").toLowerCase();
-                            String role = ("cnsler".equals(speaker) || "counselor".equals(speaker) || "system".equals(speaker)) ? "counselor" : "user";
-                            String text = Objects.toString(m.get("text"), "");
-                            String ts = Objects.toString(m.get("timestamp"), "");
-                            out.add(Map.of(
-                                    "chatId", "cnslmsg-" + cnslId + "-" + (i++),
-                                    "role", role,
-                                    "content", text,
-                                    "memberId", cnsl != null && cnsl.getMemberId() != null ? cnsl.getMemberId().getMemberId() : null,
-                                    "cnslerId", cnsl != null && cnsl.getCnslerId() != null ? cnsl.getCnslerId().getMemberId() : null,
-                                    "createdAt", ts,
-                                    "created_at", ts
-                            ));
-                        }
-                    }
-                } catch (Exception ignored) {
-                    // ignore
-                }
-            }
-        }
+        // 과거에는 cnsl_reg.cnsl_msg_data(JSON)를 fallback 으로 사용했지만,
+        // 현재는 Supabase/chat_msg를 단일 소스로 사용하므로 더 이상 fallback을 사용하지 않는다.
         return ResponseEntity.ok(out);
     }
 
@@ -215,14 +186,9 @@ public class CnslChatApiController {
         if (cnsl == null) return ResponseEntity.status(404).body(Map.of("error", "NOT_FOUND"));
         String summary = body != null ? Objects.toString(body.get("summary"), "") : "";
         Object msgData = body != null ? body.get("msg_data") : null;
+        // 요약 텍스트는 cnsl_reg.cnsl_content 에 저장만 하고,
+        // 상세 msg_data(STT 포함)는 Supabase(chat_msg) 쪽에서 관리한다.
         if (!summary.isBlank()) cnsl.setCnslContent(summary);
-        if (msgData != null) {
-            try {
-                cnsl.setCnslMsgData(objectMapper.writeValueAsString(msgData));
-            } catch (Exception e) {
-                cnsl.setCnslMsgData(Objects.toString(msgData, null));
-            }
-        }
         cnslRepository.save(cnsl);
         return ResponseEntity.ok(Map.of("success", true));
     }
