@@ -1,14 +1,11 @@
 package com.study.spring.Bbs.entity;
 
 import java.time.LocalDateTime;
-import java.util.Map;
 
 import com.study.spring.Member.entity.Member;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.hibernate.type.SqlTypes;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -52,26 +49,10 @@ public class Bbs {
 	@UpdateTimestamp
     private LocalDateTime updated_at;
 	
-	@JdbcTypeCode(SqlTypes.JSON)
-	@Column(name = "hash_tags", columnDefinition = "jsonb")
-	private Map<String, Object> hashTags;
+	// @Column(name = "hash_tags", columnDefinition = "jsonb", insertable = false, updatable = false)
+	// private String hashTags;
 
 	// Vector 처리:pgvector-java 라이브러리 등을 사용하거나 float[]로 매핑합니다.
 	@Column(columnDefinition = "vector(1536)")
 	private float[] embedding;
-
-
-
-	// [성진님 작성 코드] 
-	// /** 벡터(임베딩) - DB에는 네이티브 쿼리로 저장/조회. JPA에서는 제외. */
-	// @Transient
-	// private float[] embedding;
-
-	// /** DB bbs.mbti NOT NULL 대응: 저장 직전에 null이면 빈 문자열로 설정 */
-	// @PrePersist
-	// public void ensureMbtiNotNull() {
-	// 	if (this.mbti == null) {
-	// 		this.mbti = "";
-	// 	}
-	// }
 }
