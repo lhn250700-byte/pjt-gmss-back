@@ -157,7 +157,8 @@ public interface CnslRepository extends JpaRepository<Cnsl_Reg, Long> {
                 case when cr.cnsl_stat = 'D'
                   then to_char(cr.cnsl_dt, 'YY.MM.DD') || ' ' || to_char(cr.cnsl_end_time, 'HH24:MI')
                   else to_char(cr.cnsl_dt, 'YY.MM.DD') || ' ' || to_char(cr.cnsl_start_time, 'HH24:MI')
-                end as dt_time
+                end as dt_time,
+                get_code_nm('cnsl_tp', cr.cnsl_tp) as type
              from cnsl_reg cr
              join member m
              on cr.member_id = m.member_id
@@ -400,7 +401,8 @@ public interface CnslRepository extends JpaRepository<Cnsl_Reg, Long> {
           m2.mbti,
           get_code_nm('gender', m2.gender) || '성' AS gender,
           '만 ' || EXTRACT(YEAR FROM age(current_date, m2.birth)) ||'세' AS age,
-          m2.text
+          m2.text,
+          m2.img_url AS imgUrl
         from cnsl_reg r
         join member m1 on m1.member_id = r.member_id
         join member m2 on m2.member_id = r.cnsler_id

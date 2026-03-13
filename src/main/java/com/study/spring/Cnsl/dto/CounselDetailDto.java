@@ -12,4 +12,5 @@ public interface CounselDetailDto {
     String getGender();
     String getAge();
     String getText();
+    String getImgUrl();
 }
