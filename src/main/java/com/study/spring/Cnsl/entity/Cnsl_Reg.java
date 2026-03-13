@@ -61,9 +61,6 @@ public class Cnsl_Reg {
 	private String cnslTitle; // 상담제목
     @Column(name="cnsl_content")
 	private String cnslContent; // 상담신청내용
-
-	@Column(name="cnsl_msg_data", columnDefinition = "text")
-	private String cnslMsgData; // 요약/화상(STT) 저장용 msg_data(JSON 문자열)
 	
     @Column(name="cnsl_todo_yn")
 	private String cnslTodoYn = "Y";// 상담진행여부
