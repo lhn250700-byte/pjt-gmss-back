@@ -1,8 +1,6 @@
 package com.study.spring.Cnsl.controller;
 
-import com.study.spring.Cnsl.entity.Chat_Msg;
 import com.study.spring.Cnsl.entity.Cnsl_Reg;
-import com.study.spring.Cnsl.repository.ChatMsgRepository;
 import com.study.spring.Cnsl.repository.CnslRepository;
 import com.study.spring.Member.dto.MemberDto;
 import com.study.spring.Member.entity.Member;
@@ -23,18 +21,15 @@ public class CnslChatApiController {
 
     private final CnslRepository cnslRepository;
     private final MemberRepository memberRepository;
-    private final ChatMsgRepository chatMsgRepository;
     private final ObjectMapper objectMapper;
     private final SimpMessagingTemplate messagingTemplate;
 
     public CnslChatApiController(CnslRepository cnslRepository,
                                  MemberRepository memberRepository,
-                                 ChatMsgRepository chatMsgRepository,
                                  ObjectMapper objectMapper,
                                  SimpMessagingTemplate messagingTemplate) {
         this.cnslRepository = cnslRepository;
         this.memberRepository = memberRepository;
-        this.chatMsgRepository = chatMsgRepository;
         this.objectMapper = objectMapper;
         this.messagingTemplate = messagingTemplate;
     }
@@ -119,63 +114,8 @@ public class CnslChatApiController {
         return ResponseEntity.ok(Map.of("success", true));
     }
 
-    @GetMapping("/api/cnsl/{cnslId}/chat")
-    public ResponseEntity<?> getChat(@PathVariable("cnslId") Long cnslId, @AuthenticationPrincipal MemberDto principal) {
-        if (principal == null) return ResponseEntity.status(401).body(Map.of("error", "UNAUTHORIZED"));
-        List<Chat_Msg> rows = chatMsgRepository.findByCnslIdOrderByCreatedAtAsc(cnslId.intValue());
-        List<Map<String, Object>> out = new ArrayList<>();
-        for (Chat_Msg m : rows) {
-            out.add(Map.of(
-                    "chatId", m.getChatId(),
-                    "role", "cnsler".equalsIgnoreCase(m.getRole()) ? "counselor" : "user",
-                    "content", m.getContent(),
-                    "memberId", m.getMemberId() != null ? m.getMemberId().getMemberId() : null,
-                    "cnslerId", m.getCnslerId() != null ? m.getCnslerId().getMemberId() : null,
-                    "createdAt", m.getCreatedAt() != null ? m.getCreatedAt().toString() : null,
-                    "created_at", m.getCreatedAt() != null ? m.getCreatedAt().toString() : null
-            ));
-        }
-
-        // 과거에는 cnsl_reg.cnsl_msg_data(JSON)를 fallback 으로 사용했지만,
-        // 현재는 Supabase/chat_msg를 단일 소스로 사용하므로 더 이상 fallback을 사용하지 않는다.
-        return ResponseEntity.ok(out);
-    }
-
-    @PostMapping("/api/cnsl/{cnslId}/chat")
-    public ResponseEntity<?> postChat(@PathVariable("cnslId") Long cnslId,
-                                     @RequestBody Map<String, Object> body,
-                                     @AuthenticationPrincipal MemberDto principal) {
-        if (principal == null) return ResponseEntity.status(401).body(Map.of("error", "UNAUTHORIZED"));
-        Cnsl_Reg cnsl = cnslRepository.findById(cnslId).orElse(null);
-        if (cnsl == null) return ResponseEntity.status(404).body(Map.of("error", "NOT_FOUND"));
-        String role = body != null ? Objects.toString(body.get("role"), "user") : "user";
-        String content = body != null ? Objects.toString(body.get("content"), "") : "";
-        if (content.isBlank()) return ResponseEntity.badRequest().body(Map.of("error", "EMPTY_CONTENT"));
-
-        Member member = cnsl.getMemberId();
-        Member cnsler = cnsl.getCnslerId();
-        String dbRole = "counselor".equalsIgnoreCase(role) ? "cnsler" : "user";
-        Chat_Msg saved = chatMsgRepository.save(Chat_Msg.builder()
-                .cnslId(cnslId.intValue())
-                .memberId(member)
-                .cnslerId(cnsler)
-                .role(dbRole)
-                .content(content)
-                .build());
-
-        Map<String, Object> payload = Map.of(
-                "chatId", saved.getChatId(),
-                "role", "cnsler".equalsIgnoreCase(saved.getRole()) ? "counselor" : "user",
-                "content", saved.getContent(),
-                "memberId", saved.getMemberId() != null ? saved.getMemberId().getMemberId() : null,
-                "cnslerId", saved.getCnslerId() != null ? saved.getCnslerId().getMemberId() : null,
-                "createdAt", saved.getCreatedAt() != null ? saved.getCreatedAt().toString() : null,
-                "created_at", saved.getCreatedAt() != null ? saved.getCreatedAt().toString() : null
-        );
-        // 실시간 채팅 브로드캐스트
-        messagingTemplate.convertAndSend("/topic/cnsl/" + cnslId + "/chat", (Object) payload);
-        return ResponseEntity.ok(Map.of("chatId", saved.getChatId()));
-    }
+    // /api/cnsl/{cnslId}/chat(GET/POST)는 더 이상 Spring/JPA chat_msg를 사용하지 않고
+    // Supabase + testchatpy가 단일 소스로 관리하므로 제거한다.
 
     @PostMapping("/api/cnsl/{cnslId}/chat/summary-full")
     public ResponseEntity<?> saveSummaryFull(@PathVariable("cnslId") Long cnslId,

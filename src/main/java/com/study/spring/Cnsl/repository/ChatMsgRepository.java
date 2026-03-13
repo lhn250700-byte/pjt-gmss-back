@@ -8,6 +8,6 @@ import java.util.List;
 
 @Repository
 public interface ChatMsgRepository extends JpaRepository<Chat_Msg, Integer> {
-    List<Chat_Msg> findByCnslIdOrderByCreatedAtAsc(Integer cnslId);
+    // chat_msg 테이블은 Supabase에서 관리하며, Spring에서는 더 이상 사용하지 않는다.
 }
 
