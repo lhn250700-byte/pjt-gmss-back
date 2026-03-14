@@ -412,13 +412,14 @@ public interface CnslRepository extends JpaRepository<Cnsl_Reg, Long> {
     """, nativeQuery = true)
     CounselDetailDto getCounselDetail(@Param("cnslId") Long cnslId, @Param("email") String email);
 
+    /** 상담사 목록 (진입 시 기본): cnslCate/cnslTp 바인딩 제거하여 500 방지. 가격 필터만 적용. */
     @Query(value = """
         select
             m.member_id      AS memberId,
             m.nickname       AS nickname,
             m.profile        AS profile,
             m.text           AS text,
-	 	    m.img_url		 AS imgUrl,
+            m.img_url        AS imgUrl,
             a.cate_1_cnt     AS cate1Cnt,
             a.cate_2_cnt     AS cate2Cnt,
             a.cate_3_cnt     AS cate3Cnt,
@@ -430,67 +431,37 @@ public interface CnslRepository extends JpaRepository<Cnsl_Reg, Long> {
             ci.cnsl_4_price  AS cnsl4Price,
             ci.cnsl_5_price  AS cnsl5Price,
             ci.cnsl_6_price  AS cnsl6Price
-        from member m -- member전제
-        join member_role_list ml on m.member_id = ml.member_member_id and ml.member_role_list = 1  -- 상담사만 (1=SYSTEM). 역할 값은 member_role_list 컬럼에 저장됨
+        from member m
+        join member_role_list ml on m.member_id = ml.member_member_id and ml.member_role_list = 1
         left join (
-        	select member_id,
-               max(case when cnsl_tp = '1' then cnsl_price else 0 end ) cnsl_1_price,
-               max(case when cnsl_tp = '2' then cnsl_price else 0 end ) cnsl_2_price,
-               max(case when cnsl_tp = '3' then cnsl_price else 0 end ) cnsl_3_price,
-               max(case when cnsl_tp = '4' then cnsl_price else 0 end ) cnsl_4_price,
-               max(case when cnsl_tp = '5' then cnsl_price else 0 end ) cnsl_5_price,
-			   max(case when cnsl_tp = '6' then cnsl_price else 0 end ) cnsl_6_price
-        	from cnsl_info
-           group by member_id
-           ) ci on m.member_id = ci.member_id
+            select member_id,
+                max(case when cnsl_tp = '1' then cnsl_price else 0 end) cnsl_1_price,
+                max(case when cnsl_tp = '2' then cnsl_price else 0 end) cnsl_2_price,
+                max(case when cnsl_tp = '3' then cnsl_price else 0 end) cnsl_3_price,
+                max(case when cnsl_tp = '4' then cnsl_price else 0 end) cnsl_4_price,
+                max(case when cnsl_tp = '5' then cnsl_price else 0 end) cnsl_5_price,
+                max(case when cnsl_tp = '6' then cnsl_price else 0 end) cnsl_6_price
+            from cnsl_info group by member_id
+        ) ci on m.member_id = ci.member_id
         left join (
-        	select crg.cnsler_id,
-        		   sum(case when crg.cnsl_cate = '1' then 1 else 0 end) cate_1_cnt,
-        		   sum(case when crg.cnsl_cate = '2' then 1 else 0 end) cate_2_cnt,
-        		   sum(case when crg.cnsl_cate = '3' then 1 else 0 end) cate_3_cnt,
-        	       count(crw.review_id) cnsl_cnt,
-        	       coalesce(avg(crw.eval_pt), 0) avg_eval_pt
-        	from cnsl_reg crg
-          left join cnsl_review crw on crg.cnsl_id = crw.cnsl_id
-        	where coalesce(crg.del_yn,'N') = 'N'
-        	group by crg.cnsler_id
-        	) a on a.cnsler_id = m.member_id
-    	where 1=1
-        -- 상담 유형 필터 (1,2,3 중 선택)
-        and (
-		  :cnslCate is null
-		  or exists (
-			  select 1
-			  from cnsl_reg crg2
-			  where crg2.cnsler_id = m.member_id
-			  and crg2.cnsl_cate in (:cnslCate)
-			  and coalesce(crg2.del_yn,'N') = 'N'
-		  )
-	    ) 
-
-        -- 상담 방식 필터 (1~6)
-        and (
-			 :cnslTp is null
-			 or exists (
-				 select 1
-				 from cnsl_info ci2
-				 where ci2.member_id = m.member_id
-				 and ci2.cnsl_tp in (:cnslTp)
-			 )
-	 	)
-
-        -- 가격 필터
-        and (:minPrice is null 
-             or (
-                (ci.cnsl_1_price between :minPrice and :maxPrice)
-             or (ci.cnsl_2_price between :minPrice and :maxPrice)
-             or (ci.cnsl_3_price between :minPrice and :maxPrice)
-             or (ci.cnsl_4_price between :minPrice and :maxPrice)
-             or (ci.cnsl_5_price between :minPrice and :maxPrice)
-			 or (ci.cnsl_6_price between :minPrice and :maxPrice)			
-             )
-            )
-        order by a.cnsl_cnt , a.avg_eval_pt, m.member_id
+            select crg.cnsler_id,
+                sum(case when crg.cnsl_cate = '1' then 1 else 0 end) cate_1_cnt,
+                sum(case when crg.cnsl_cate = '2' then 1 else 0 end) cate_2_cnt,
+                sum(case when crg.cnsl_cate = '3' then 1 else 0 end) cate_3_cnt,
+                count(crw.review_id) cnsl_cnt,
+                coalesce(avg(crw.eval_pt), 0) avg_eval_pt
+            from cnsl_reg crg
+            left join cnsl_review crw on crg.cnsl_id = crw.cnsl_id
+            where coalesce(crg.del_yn,'N') = 'N'
+            group by crg.cnsler_id
+        ) a on a.cnsler_id = m.member_id
+        where 1=1
+        and (:minPrice is null or (
+            (ci.cnsl_1_price between :minPrice and :maxPrice) or (ci.cnsl_2_price between :minPrice and :maxPrice)
+            or (ci.cnsl_3_price between :minPrice and :maxPrice) or (ci.cnsl_4_price between :minPrice and :maxPrice)
+            or (ci.cnsl_5_price between :minPrice and :maxPrice) or (ci.cnsl_6_price between :minPrice and :maxPrice)
+        ))
+        order by a.cnsl_cnt, a.avg_eval_pt, m.member_id
     """, countQuery = """
         select count(m.member_id)
         from member m
@@ -507,11 +478,9 @@ public interface CnslRepository extends JpaRepository<Cnsl_Reg, Long> {
         ) ci on m.member_id = ci.member_id
         left join ( select cnsler_id from cnsl_reg where coalesce(del_yn,'N') = 'N' group by cnsler_id ) a on a.cnsler_id = m.member_id
         where 1=1
-        and ( :cnslCate is null or exists ( select 1 from cnsl_reg crg2 where crg2.cnsler_id = m.member_id and crg2.cnsl_cate in (:cnslCate) and coalesce(crg2.del_yn,'N') = 'N' ) )
-        and ( :cnslTp is null or exists ( select 1 from cnsl_info ci2 where ci2.member_id = m.member_id and ci2.cnsl_tp in (:cnslTp) ) )
-        and ( :minPrice is null or ( (coalesce(ci.cnsl_1_price,0) between :minPrice and :maxPrice) or (coalesce(ci.cnsl_2_price,0) between :minPrice and :maxPrice) or (coalesce(ci.cnsl_3_price,0) between :minPrice and :maxPrice) or (coalesce(ci.cnsl_4_price,0) between :minPrice and :maxPrice) or (coalesce(ci.cnsl_5_price,0) between :minPrice and :maxPrice) or (coalesce(ci.cnsl_6_price,0) between :minPrice and :maxPrice) ) )
+        and (:minPrice is null or ( (coalesce(ci.cnsl_1_price,0) between :minPrice and :maxPrice) or (coalesce(ci.cnsl_2_price,0) between :minPrice and :maxPrice) or (coalesce(ci.cnsl_3_price,0) between :minPrice and :maxPrice) or (coalesce(ci.cnsl_4_price,0) between :minPrice and :maxPrice) or (coalesce(ci.cnsl_5_price,0) between :minPrice and :maxPrice) or (coalesce(ci.cnsl_6_price,0) between :minPrice and :maxPrice) ) )
     """, nativeQuery = true)
-    Page<CounselorListDto> getCounselorList(Pageable pageable, @Param("cnslCate") List<String> cnslCate, @Param("cnslTp") List<String> cnslTp, @Param("minPrice") Integer minPrice, @Param("maxPrice") Integer maxPrice);
+    Page<CounselorListDto> getCounselorList(Pageable pageable, @Param("minPrice") Integer minPrice, @Param("maxPrice") Integer maxPrice);
 
     /** 해시태그(취업/커리어) 필터 포함. hashTags는 null이 아닐 때만 호출 (null 시 getCounselorList 사용하여 cast 오류 방지) */
     @Query(value = """

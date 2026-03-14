@@ -318,20 +318,22 @@ public class CnslService {
         cnslRepository.save(cnsl_Reg);
     }
 
-    // [상담사 리스트] hashTags null이면 해시태그 미적용 쿼리, 있으면 해시태그 쿼리 (cast(null) 500 방지)
+    // [상담사 리스트] 진입 시 기본은 getCounselorList(가격만). 해시태그 선택 시 getCounselorListByHashTags (cnslCate/cnslTp null이면 전체값 전달해 바인딩 500 방지)
     public Page<CounselorListDto> getCounselorList(Pageable pageable, CounselorListReqeustDto requestDto) {
-        List<String> cnslCate = requestDto.getCnslCate();
-        if (cnslCate != null && cnslCate.isEmpty()) cnslCate = null;
-        List<String> cnslTp = requestDto.getCnslTp();
-        if (cnslTp != null && cnslTp.isEmpty()) cnslTp = null;
+        Integer minPrice = requestDto.getMinPrice();
+        Integer maxPrice = requestDto.getMaxPrice();
         String[] hashTags = requestDto.getHashTags();
         if (hashTags != null && (hashTags.length == 0 || (hashTags.length == 1 && (hashTags[0] == null || hashTags[0].isBlank())))) {
             hashTags = null;
         }
         if (hashTags == null) {
-            return cnslRepository.getCounselorList(pageable, cnslCate, cnslTp, requestDto.getMinPrice(), requestDto.getMaxPrice());
+            return cnslRepository.getCounselorList(pageable, minPrice, maxPrice);
         }
-        return cnslRepository.getCounselorListByHashTags(pageable, cnslCate, cnslTp, requestDto.getMinPrice(), requestDto.getMaxPrice(), hashTags);
+        List<String> cnslCate = requestDto.getCnslCate();
+        if (cnslCate == null || cnslCate.isEmpty()) cnslCate = List.of("1", "2", "3");
+        List<String> cnslTp = requestDto.getCnslTp();
+        if (cnslTp == null || cnslTp.isEmpty()) cnslTp = List.of("1", "2", "3", "4", "5", "6");
+        return cnslRepository.getCounselorListByHashTags(pageable, cnslCate, cnslTp, minPrice, maxPrice, hashTags);
     }
     
     // [상담사 뷰]
