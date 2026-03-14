@@ -19,7 +19,8 @@ import java.util.List;
 import java.util.Map;
 
 @Log4j2
-public class  JWTCheckFilter extends OncePerRequestFilter {
+public class JWTCheckFilter extends OncePerRequestFilter {
+
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         String path = request.getRequestURI();
@@ -43,6 +44,26 @@ public class  JWTCheckFilter extends OncePerRequestFilter {
                   path.startsWith("/api/testchatpy")
           ) return true;
 
+        // 공개 API 및 Swagger 관련 경로는 JWT 체크 제외
+        if (
+                path.equals("/") ||
+                path.equals("/api/auth/refresh") ||
+                path.equals("/api/member/login") ||
+                path.equals("/api/member/signup") ||
+                path.startsWith("/api/member_InfoNicknameChk") ||
+                path.startsWith("/swagger-ui/") ||
+                path.equals("/swagger-ui") ||
+                path.startsWith("/api-docs/") ||
+                path.equals("/api-docs") ||
+                path.equals("/api/centers") ||
+                path.startsWith("/api/centers/") ||
+                path.startsWith("/api/bbs/") ||
+                path.startsWith("/api/bbs") ||
+                path.equals("/api/bbs_popularPostRealtimeList")
+        ) {
+            log.info("JWT filter skip for path: {}", path);
+            return true;
+        }
 
         return false;
     }
@@ -54,17 +75,20 @@ public class  JWTCheckFilter extends OncePerRequestFilter {
             FilterChain filterChain) throws ServletException, IOException {
 
         log.info("------------------------JWTCheckFilter.......................");
-        log.info("Request URI: " + request.getRequestURI());
-        log.info("Request Method: " + request.getMethod());
+        log.info("Request URI: {}", request.getRequestURI());
+        log.info("Request Method: {}", request.getMethod());
 
-        // OPTIONS 메서드(프리플라이트 요청)는 필터를 통과시킴
-        if ("OPTIONS".equals(request.getMethod())) {
+        // OPTIONS 요청은 통과
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             filterChain.doFilter(request, response);
             return;
         }
 
         String authHeaderStr = request.getHeader("Authorization");
-        log.info("Authorization Header: " + (authHeaderStr != null ? authHeaderStr.substring(0, Math.min(50, authHeaderStr.length())) + "..." : "null"));
+        log.info("Authorization Header: {}",
+                authHeaderStr != null
+                        ? authHeaderStr.substring(0, Math.min(50, authHeaderStr.length())) + "..."
+                        : "null");
 
         String accessToken = null;
         if (authHeaderStr != null && authHeaderStr.startsWith("Bearer ")) {
@@ -82,6 +106,7 @@ public class  JWTCheckFilter extends OncePerRequestFilter {
             String msg = gson.toJson(Map.of("error", "ERROR_ACCESS_TOKEN", "message", "accessToken이 없습니다."));
             response.setContentType("application/json;charset=UTF-8");
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+
             PrintWriter printWriter = response.getWriter();
             printWriter.println(msg);
             printWriter.close();
@@ -89,11 +114,10 @@ public class  JWTCheckFilter extends OncePerRequestFilter {
         }
 
         try {
+            String accessToken = authHeaderStr.substring(7);
             Map<String, Object> claims = JWTUtil.validateToken(accessToken);
 
-            log.info("JWT claims: " + claims);
-
-            //filterChain.doFilter(request, response); //이하 추가
+            log.info("JWT claims: {}", claims);
 
             String email = (String) claims.get("email");
             String password = (String) claims.get("password");
@@ -101,38 +125,50 @@ public class  JWTCheckFilter extends OncePerRequestFilter {
             Boolean social = (Boolean) claims.get("social");
             @SuppressWarnings("unchecked")
             List<String> roleNames = (List<String>) claims.get("roleNames");
-            
+
             if (nickname == null) {
                 nickname = "kakao_";
             }
 
-            MemberDto memberDto = new MemberDto(email, password, nickname, social.booleanValue(), roleNames);
+            MemberDto memberDto = new MemberDto(
+                    email,
+                    password,
+                    nickname,
+                    social != null && social,
+                    roleNames
+            );
 
             log.info("-----------------------------------");
             log.info(memberDto);
             log.info(memberDto.getAuthorities());
 
-            UsernamePasswordAuthenticationToken authenticationToken
-                    = new UsernamePasswordAuthenticationToken(memberDto, password, memberDto.getAuthorities());
+            UsernamePasswordAuthenticationToken authenticationToken =
+                    new UsernamePasswordAuthenticationToken(
+                            memberDto,
+                            password,
+                            memberDto.getAuthorities()
+                    );
 
             SecurityContextHolder.getContext().setAuthentication(authenticationToken);
 
             filterChain.doFilter(request, response);
 
-        } catch(Exception e){
-
+        } catch (Exception e) {
             log.error("JWT Check Error..............");
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
 
             Gson gson = new Gson();
-            String msg = gson.toJson(Map.of("error", "ERROR_ACCESS_TOKEN"));
+            String msg = gson.toJson(Map.of(
+                    "error", "ERROR_ACCESS_TOKEN",
+                    "message", "유효하지 않은 Access Token입니다."
+            ));
 
-//	      response.setContentType("application/json");
-            response.setContentType("application/json;charset=UTF-8"); // 한글이나 문자대응
+            response.setContentType("application/json;charset=UTF-8");
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+
             PrintWriter printWriter = response.getWriter();
             printWriter.println(msg);
             printWriter.close();
-
         }
     }
 }

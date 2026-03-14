@@ -7,6 +7,7 @@ import java.util.Optional;
 import java.lang.String;
 
 import com.study.spring.Cnsl.dto.*;
+import com.study.spring.Member.entity.Member;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -156,7 +157,8 @@ public interface CnslRepository extends JpaRepository<Cnsl_Reg, Long> {
                 case when cr.cnsl_stat = 'D'
                   then to_char(cr.cnsl_dt, 'YY.MM.DD') || ' ' || to_char(cr.cnsl_end_time, 'HH24:MI')
                   else to_char(cr.cnsl_dt, 'YY.MM.DD') || ' ' || to_char(cr.cnsl_start_time, 'HH24:MI')
-                end as dt_time
+                end as dt_time,
+                get_code_nm('cnsl_tp', cr.cnsl_tp) as type
              from cnsl_reg cr
              join member m
              on cr.member_id = m.member_id
@@ -284,6 +286,7 @@ public interface CnslRepository extends JpaRepository<Cnsl_Reg, Long> {
 			    left join cnsl_info ci on ci.member_id = cr.cnsler_id and ci.cnsl_tp = cr.cnsl_tp
 			    where cr.cnsl_stat not in ('X') -- 상담취소제외
 			    and cr.cnsler_id = :cnslerId
+			    and cr.cnsl_tp <> '1'
 			    and cr.cnsl_dt between :startDate and :endDate
 			    group by cr.cnsler_id, m.nickname, cr.cnsl_tp
 			    order by count(*) desc, cr.cnsl_tp
@@ -398,7 +401,8 @@ public interface CnslRepository extends JpaRepository<Cnsl_Reg, Long> {
           m2.mbti,
           get_code_nm('gender', m2.gender) || '성' AS gender,
           '만 ' || EXTRACT(YEAR FROM age(current_date, m2.birth)) ||'세' AS age,
-          m2.text
+          m2.text,
+          m2.img_url AS imgUrl
         from cnsl_reg r
         join member m1 on m1.member_id = r.member_id
         join member m2 on m2.member_id = r.cnsler_id
@@ -414,6 +418,7 @@ public interface CnslRepository extends JpaRepository<Cnsl_Reg, Long> {
             m.nickname       AS nickname,
             m.profile        AS profile,
             m.text           AS text,
+	 	    m.img_url		 AS imgUrl,
             a.cate_1_cnt     AS cate1Cnt,
             a.cate_2_cnt     AS cate2Cnt,
             a.cate_3_cnt     AS cate3Cnt,
@@ -497,6 +502,7 @@ public interface CnslRepository extends JpaRepository<Cnsl_Reg, Long> {
 		    m.nickname       AS nickname,
 		    m.profile        AS profile,
 		    m.text           AS text,
+			m.img_url 		 AS imgUrl,
 		    a.cnsl_cnt       AS cnslCnt,
 		    a.avg_eval_pt    AS avgEvalPt,
 		    ci.cnsl_1_price  AS cnsl1Price,
@@ -562,4 +568,6 @@ public interface CnslRepository extends JpaRepository<Cnsl_Reg, Long> {
 	Optional<CnslDetailDto> findcnslDetail(@Param("cnslId") Long cnslId, @Param("memberId") String memberId);
 
 //	Chat_Msg save(Chat_Msg chatMsg);
+
+	Optional<Cnsl_Reg> findByMemberId(Member member);
 }

@@ -6,4 +6,5 @@ public interface cnslListWithoutStatusDto {
     String getCnslContent();
     String getNickname();
     String getDtTime();
+    String getType();
 }

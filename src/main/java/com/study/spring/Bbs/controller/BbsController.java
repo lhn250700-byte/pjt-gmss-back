@@ -201,9 +201,9 @@ public class BbsController {
     // ========================================
 
     @GetMapping("/api/bbs/{id}/comments")
-    @Operation(summary = "댓글 목록", description = "해당 게시글의 댓글 목록")
+    @Operation(summary = "댓글 목록", description = "해당 게시글의 댓글 목록 (좋아요/싫어요 건수 포함)")
     public ResponseEntity<?> getComments(@PathVariable("id") Integer id) {
-        return ResponseEntity.ok(bbsService.getComments(id));
+        return ResponseEntity.ok(bbsService.getCommentsWithMeta(id));
     }
 
     @PostMapping("/api/bbs/{id}/comments")
@@ -223,6 +223,27 @@ public class BbsController {
             return ResponseEntity.badRequest().body(
                 Map.of("error", e.getMessage())
             );
+        }
+    }
+
+    @PostMapping("/api/bbs/comments/{cmtId}/like")
+    @Operation(summary = "댓글 좋아요/싫어요", description = "댓글에 좋아요(true) 또는 싫어요(false). 로그인 필수.")
+    public ResponseEntity<?> toggleCommentLike(
+            @PathVariable("cmtId") Integer cmtId,
+            @RequestBody Map<String, Boolean> body,
+            @RequestHeader(value = "X-User-Id", required = false) String memberId) {
+        try {
+            if (memberId == null || memberId.isBlank() || "anonymous".equalsIgnoreCase(memberId.trim())) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                    Map.of("error", "로그인 후 이용해 주세요."));
+            }
+            boolean isLike = body != null && body.getOrDefault("is_like", true);
+            bbsService.toggleCommentLike(cmtId, memberId.trim(), isLike);
+            return ResponseEntity.ok(Map.of(
+                    "message", "처리되었습니다",
+                    "likeCounts", bbsService.getCommentLikeCounts(cmtId)));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 

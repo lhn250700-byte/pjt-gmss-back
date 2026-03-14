@@ -1,5 +1,6 @@
 package com.study.spring.keyword.repository;
 
+import com.study.spring.Member.entity.Member;
 import com.study.spring.keyword.entity.BbsRisk;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface BbsRiskRepository extends JpaRepository<BbsRisk, Long> {
@@ -25,4 +27,6 @@ public interface BbsRiskRepository extends JpaRepository<BbsRisk, Long> {
     // 특정 게시물
     @Query("SELECT b FROM BbsRisk b WHERE b.bbsId = :bbsId ORDER BY b.createdAt DESC")
     List<BbsRisk> findByBbsIdOrderByCreatedAtDesc(@Param("bbsId") Long bbsId);
+
+    Optional<BbsRisk> findByMemberId(String memberId);
 }
