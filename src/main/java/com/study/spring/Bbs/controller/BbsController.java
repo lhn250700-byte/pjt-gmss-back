@@ -12,6 +12,7 @@ import com.study.spring.activity.service.ActivityLogger;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @Tag(name = "게시판", description = "게시판 CRUD 및 인기글 API")
 public class BbsController {
@@ -37,8 +39,13 @@ public class BbsController {
 
     // [실시간 인기글]
     @GetMapping("/api/bbs_popularPostRealtimeList")
-    public List<PopularPostClassDto> getRealtimePopularPosts (@RequestParam("period") String period){
-        return bbsService.findRealtimePopularPosts(period);
+    public ResponseEntity<?> getRealtimePopularPosts(@RequestParam("period") String period) {
+        try {
+            return ResponseEntity.ok(bbsService.findRealtimePopularPosts(period));
+        } catch (Exception e) {
+            log.error("bbs_popularPostRealtimeList error, period={}", period, e);
+            return ResponseEntity.ok(List.<PopularPostClassDto>of());
+        }
     }
 
     // [주간 인기글]
