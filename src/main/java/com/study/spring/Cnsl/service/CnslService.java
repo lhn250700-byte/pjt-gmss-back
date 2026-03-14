@@ -320,14 +320,18 @@ public class CnslService {
 
     // [상담사 리스트]
     public Page<CounselorListDto> getCounselorList(Pageable pageable, CounselorListReqeustDto requestDto) {
-
+        // hashTags가 비어 있거나 [''] 하나만 있으면 해시태그 필터 미적용 (null 전달)
+        String[] hashTags = requestDto.getHashTags();
+        if (hashTags != null && hashTags.length == 1 && (hashTags[0] == null || hashTags[0].isBlank())) {
+            hashTags = null;
+        }
         return cnslRepository.getCounselorList(
                 pageable,
                 requestDto.getCnslCate(),
                 requestDto.getCnslTp(),
                 requestDto.getMinPrice(),
                 requestDto.getMaxPrice(),
-                requestDto.getHashTags()
+                hashTags
         );
     }
     

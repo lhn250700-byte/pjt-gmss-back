@@ -64,6 +64,8 @@ public class CustomSecurityConfig {
                 "/api/bbs**",
                 "/api/bbs/**",
                 "/api/bbs_popularPostRealtimeList",
+                "/api/counselorList",
+                "/api/counselor/**",
                 "/api/testchatpy/**"
             ).permitAll()
             .anyRequest().authenticated()
