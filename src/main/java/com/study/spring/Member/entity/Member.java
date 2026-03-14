@@ -52,7 +52,7 @@ public class Member {
 			schema = "public",
 			joinColumns = @JoinColumn(name = "member_member_id")
 	)
-	@Column(name = "role")
+	@Column(name = "member_role_list") // DB에 실제 값이 저장된 컬럼 (role 컬럼은 null)
 	@Enumerated(EnumType.ORDINAL) // 0=USER, 1=SYSTEM, 2=ADMIN (DB: smallint)
 	@Builder.Default
 	private List<MemberRole> memberRoleList = new ArrayList<>();
