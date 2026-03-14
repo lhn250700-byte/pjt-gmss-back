@@ -490,6 +490,12 @@ public interface CnslRepository extends JpaRepository<Cnsl_Reg, Long> {
 			 or (ci.cnsl_6_price between :minPrice and :maxPrice)			
              )
             )
+        -- 해시태그 필터 (취업/커리어): member.hash_tags -> 'hashTag' 배열과 일치하는 상담사만
+        and (:hashTags is null or cardinality(cast(:hashTags as text[])) = 0
+             or (m.hash_tags is not null and exists (
+                 select 1 from jsonb_array_elements_text(m.hash_tags -> 'hashTag') as tag
+                 where tag = any(cast(:hashTags as text[]))
+             )))
         order by a.cnsl_cnt , a.avg_eval_pt, m.member_id
     """, countQuery = """
         select count(m.member_id)
@@ -510,8 +516,9 @@ public interface CnslRepository extends JpaRepository<Cnsl_Reg, Long> {
         and ( :cnslCate is null or exists ( select 1 from cnsl_reg crg2 where crg2.cnsler_id = m.member_id and crg2.cnsl_cate in (:cnslCate) and coalesce(crg2.del_yn,'N') = 'N' ) )
         and ( :cnslTp is null or exists ( select 1 from cnsl_info ci2 where ci2.member_id = m.member_id and ci2.cnsl_tp in (:cnslTp) ) )
         and ( :minPrice is null or ( (coalesce(ci.cnsl_1_price,0) between :minPrice and :maxPrice) or (coalesce(ci.cnsl_2_price,0) between :minPrice and :maxPrice) or (coalesce(ci.cnsl_3_price,0) between :minPrice and :maxPrice) or (coalesce(ci.cnsl_4_price,0) between :minPrice and :maxPrice) or (coalesce(ci.cnsl_5_price,0) between :minPrice and :maxPrice) or (coalesce(ci.cnsl_6_price,0) between :minPrice and :maxPrice) ) )
+        and ( :hashTags is null or cardinality(cast(:hashTags as text[])) = 0 or (m.hash_tags is not null and exists ( select 1 from jsonb_array_elements_text(m.hash_tags -> 'hashTag') as tag where tag = any(cast(:hashTags as text[])) )) )
     """, nativeQuery = true)
-    Page<CounselorListDto> getCounselorList(Pageable pageable, @Param("cnslCate") List<String> cnslCate, @Param("cnslTp") List<String> cnslTp, @Param("minPrice") Integer minPrice, @Param("maxPrice") Integer maxPrice);
+    Page<CounselorListDto> getCounselorList(Pageable pageable, @Param("cnslCate") List<String> cnslCate, @Param("cnslTp") List<String> cnslTp, @Param("minPrice") Integer minPrice, @Param("maxPrice") Integer maxPrice, @Param("hashTags") String[] hashTags);
 
     
     @Query(value="""

@@ -318,19 +318,24 @@ public class CnslService {
         cnslRepository.save(cnsl_Reg);
     }
 
-    // [상담사 리스트] hashTags 필터는 추후 복구 가능 (현재 쿼리에서 제외하여 500 방지)
+    // [상담사 리스트] 취업/커리어 해시태그 필터 포함
     public Page<CounselorListDto> getCounselorList(Pageable pageable, CounselorListReqeustDto requestDto) {
         // 빈 리스트는 null로 넘겨 네이티브 쿼리 in() 바인딩 오류 방지
         List<String> cnslCate = requestDto.getCnslCate();
         if (cnslCate != null && cnslCate.isEmpty()) cnslCate = null;
         List<String> cnslTp = requestDto.getCnslTp();
         if (cnslTp != null && cnslTp.isEmpty()) cnslTp = null;
+        String[] hashTags = requestDto.getHashTags();
+        if (hashTags != null && (hashTags.length == 0 || (hashTags.length == 1 && (hashTags[0] == null || hashTags[0].isBlank())))) {
+            hashTags = null;
+        }
         return cnslRepository.getCounselorList(
                 pageable,
                 cnslCate,
                 cnslTp,
                 requestDto.getMinPrice(),
-                requestDto.getMaxPrice()
+                requestDto.getMaxPrice(),
+                hashTags
         );
     }
     
