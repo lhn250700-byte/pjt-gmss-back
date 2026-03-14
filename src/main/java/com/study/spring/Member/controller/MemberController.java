@@ -56,13 +56,7 @@ public class MemberController {
 			Map<String, Object> claims = memberDto.getClaims();
 			String accessToken = JWTUtil.generateToken(claims, 10);
 			String refreshToken = JWTUtil.generateToken(claims, 60 * 24);
-			Cookie accessTokenCookie = new Cookie("accessToken", accessToken);
-			accessTokenCookie.setHttpOnly(true);
-			accessTokenCookie.setPath("/");
-			accessTokenCookie.setMaxAge(60 * 10);
-			accessTokenCookie.setAttribute("SameSite", "None");
-			accessTokenCookie.setSecure(true);
-			response.addCookie(accessTokenCookie);
+			// accessToken은 응답 body만 사용, 쿠키에는 refreshToken만 저장
 			Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
 			refreshTokenCookie.setHttpOnly(true);
 			refreshTokenCookie.setPath("/");
@@ -157,14 +151,7 @@ public class MemberController {
 			refreshTokenCookie.setAttribute("SameSite", "None");
 			refreshTokenCookie.setSecure(true);
 			response.addCookie(refreshTokenCookie);
-
-			Cookie accessTokenCookie = new Cookie("accessToken", newAccessToken);
-			accessTokenCookie.setHttpOnly(true);
-			accessTokenCookie.setPath("/");
-			accessTokenCookie.setMaxAge(60 * 10); // 10분
-			accessTokenCookie.setAttribute("SameSite", "None");
-			accessTokenCookie.setSecure(true);
-			response.addCookie(accessTokenCookie);
+			// accessToken은 쿠키에 넣지 않음, 응답 body만 사용
 
 			// 5) 응답 반환
 			Map<String, Object> responseBody = new HashMap<>();

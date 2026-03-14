@@ -51,18 +51,7 @@ public class APILoginSuccessHandler implements AuthenticationSuccessHandler {
 		
 		String accessToken = JWTUtil.generateToken(claims,10);
 		String refreshToken = JWTUtil.generateToken(claims,60*24);
-		
-		
-//		httponly
-		jakarta.servlet.http.Cookie accessTokenCookie =
-				new jakarta.servlet.http.Cookie("accessToken", accessToken);
-		accessTokenCookie.setHttpOnly(true);
-		accessTokenCookie.setPath("/");
-		accessTokenCookie.setMaxAge(60 * 10); // 10분
-		accessTokenCookie.setAttribute("SameSite", "None");
-		accessTokenCookie.setSecure(true);
-		response.addCookie(accessTokenCookie);
-
+		// accessToken은 응답 body만 사용, 쿠키에는 refreshToken만 저장
 		jakarta.servlet.http.Cookie refreshTokenCookie = 
 				new jakarta.servlet.http.Cookie("refreshToken", refreshToken);
 		refreshTokenCookie.setHttpOnly(true);

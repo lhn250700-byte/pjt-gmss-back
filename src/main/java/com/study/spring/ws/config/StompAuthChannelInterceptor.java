@@ -76,26 +76,39 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
         return message;
     }
 
+    /** accessToken은 쿠키에 넣지 않으므로, Handshake 시 쿼리 param 또는 CONNECT 헤더에서 조회 */
     private Authentication authenticateFromCookie(StompHeaderAccessor accessor) {
-        // 1) HandshakeInterceptor가 세션 attributes로 주입한 쿠키를 우선 사용
+        // 1) Handshake 시 쿼리 param(token) 또는 레거시 쿠키로 넣은 session attribute
         Object tokenFromSession = accessor.getSessionAttributes() != null ? accessor.getSessionAttributes().get("accessToken") : null;
         String token = tokenFromSession != null ? String.valueOf(tokenFromSession) : null;
         if (token != null && !token.isBlank()) {
             return authenticateByJwt(token);
         }
 
-        // 2) 일부 환경에서는 CONNECT nativeHeader에 cookie가 포함되므로 fallback으로 파싱
-        List<String> cookieHeaders = accessor.getNativeHeader("cookie");
-        if (cookieHeaders == null || cookieHeaders.isEmpty()) {
-            cookieHeaders = accessor.getNativeHeader("Cookie");
+        // 2) CONNECT 프레임 헤더: Authorization Bearer 또는 token
+        List<String> authHeaders = accessor.getNativeHeader("Authorization");
+        if (authHeaders != null && !authHeaders.isEmpty()) {
+            String v = authHeaders.get(0);
+            if (v != null && v.startsWith("Bearer ")) {
+                token = v.substring(7).trim();
+                if (!token.isBlank()) return authenticateByJwt(token);
+            }
         }
-        if (cookieHeaders == null || cookieHeaders.isEmpty()) return null;
+        List<String> tokenHeaders = accessor.getNativeHeader("token");
+        if (tokenHeaders != null && !tokenHeaders.isEmpty()) {
+            token = tokenHeaders.get(0);
+            if (token != null && !token.isBlank()) return authenticateByJwt(token);
+        }
 
-        String cookie = String.join("; ", cookieHeaders);
-        token = extractCookieValue(cookie, "accessToken");
-        if (token == null || token.isBlank()) return null;
-
-        return authenticateByJwt(token);
+        // 3) 레거시: Cookie 헤더에서 accessToken
+        List<String> cookieHeaders = accessor.getNativeHeader("cookie");
+        if (cookieHeaders == null || cookieHeaders.isEmpty()) cookieHeaders = accessor.getNativeHeader("Cookie");
+        if (cookieHeaders != null && !cookieHeaders.isEmpty()) {
+            String cookie = String.join("; ", cookieHeaders);
+            token = extractCookieValue(cookie, "accessToken");
+            if (token != null && !token.isBlank()) return authenticateByJwt(token);
+        }
+        return null;
     }
 
     private Authentication authenticateByJwt(String token) {

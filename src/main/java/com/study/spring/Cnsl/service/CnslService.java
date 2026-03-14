@@ -318,22 +318,31 @@ public class CnslService {
         cnslRepository.save(cnsl_Reg);
     }
 
-    // [상담사 리스트] 진입 시 기본은 getCounselorList(가격만). 해시태그 선택 시 getCounselorListByHashTags (cnslCate/cnslTp null이면 전체값 전달해 바인딩 500 방지)
+    // [상담사 리스트] 진입=가격만 / 상담방식만 선택=getCounselorListByMethod / 상담유형 선택=getCounselorListWithFilters / 해시태그 선택=getCounselorListByHashTags
     public Page<CounselorListDto> getCounselorList(Pageable pageable, CounselorListReqeustDto requestDto) {
         Integer minPrice = requestDto.getMinPrice();
         Integer maxPrice = requestDto.getMaxPrice();
+        List<String> cnslCate = requestDto.getCnslCate();
+        if (cnslCate != null && cnslCate.isEmpty()) cnslCate = null;
+        List<String> cnslTp = requestDto.getCnslTp();
+        if (cnslTp != null && cnslTp.isEmpty()) cnslTp = null;
         String[] hashTags = requestDto.getHashTags();
         if (hashTags != null && (hashTags.length == 0 || (hashTags.length == 1 && (hashTags[0] == null || hashTags[0].isBlank())))) {
             hashTags = null;
         }
-        if (hashTags == null) {
-            return cnslRepository.getCounselorList(pageable, minPrice, maxPrice);
+        if (hashTags != null) {
+            List<String> cate = cnslCate != null ? cnslCate : List.of("1", "2", "3");
+            List<String> tp = cnslTp != null ? cnslTp : List.of("1", "2", "3", "4", "5", "6");
+            return cnslRepository.getCounselorListByHashTags(pageable, cate, tp, minPrice, maxPrice, hashTags);
         }
-        List<String> cnslCate = requestDto.getCnslCate();
-        if (cnslCate == null || cnslCate.isEmpty()) cnslCate = List.of("1", "2", "3");
-        List<String> cnslTp = requestDto.getCnslTp();
-        if (cnslTp == null || cnslTp.isEmpty()) cnslTp = List.of("1", "2", "3", "4", "5", "6");
-        return cnslRepository.getCounselorListByHashTags(pageable, cnslCate, cnslTp, minPrice, maxPrice, hashTags);
+        if (cnslTp != null && (cnslCate == null || cnslCate.isEmpty())) {
+            return cnslRepository.getCounselorListByMethod(pageable, cnslTp, minPrice, maxPrice);
+        }
+        if (cnslCate != null) {
+            List<String> tp = cnslTp != null ? cnslTp : List.of("1", "2", "3", "4", "5", "6");
+            return cnslRepository.getCounselorListWithFilters(pageable, cnslCate, tp, minPrice, maxPrice);
+        }
+        return cnslRepository.getCounselorList(pageable, minPrice, maxPrice);
     }
     
     // [상담사 뷰]

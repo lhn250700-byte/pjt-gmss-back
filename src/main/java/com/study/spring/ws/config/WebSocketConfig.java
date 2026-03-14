@@ -28,8 +28,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        // 프론트는 쿠키(HttpOnly) 기반이므로 withCredentials + SockJS를 사용합니다.
-        // Origin은 환경변수 CORS_ORIGINS(콤마구분) 기준으로 허용합니다.
+        // accessToken은 쿠키에 넣지 않으므로, 프론트는 연결 시 쿼리 파라미 token 또는 CONNECT 헤더 Authorization: Bearer <token> 전달.
+        // 예: SockJS('/ws?token=' + encodeURIComponent(accessToken)) 또는 CONNECT frame에 token/Authorization 헤더.
         registry.addEndpoint("/ws")
                 .setAllowedOriginPatterns(AllowedOrigins.allowedOriginPatterns())
                 .addInterceptors(wsHandshakeCookieInterceptor)
