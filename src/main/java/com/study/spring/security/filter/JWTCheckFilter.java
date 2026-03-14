@@ -18,6 +18,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Spring JWT 검사 필터.
+ * permitAll 경로 중 "일부 메서드만 로그인 필요"인 경우(GET 공개 / POST·PUT·DELETE 인증)에는
+ * 메서드별로 스킵 여부를 나눠서, 쓰기 요청 시에만 JWT를 검사하고 principal을 설정한다.
+ */
 @Log4j2
 public class JWTCheckFilter extends OncePerRequestFilter {
 
@@ -40,9 +45,18 @@ public class JWTCheckFilter extends OncePerRequestFilter {
                   path.startsWith("/api-docs/") ||
                   path.startsWith("/api/member_InfoNicknameChk") || 
                   path.equals("/api-docs") ||
-                  path.startsWith("/api/bbs") ||
                   path.startsWith("/api/testchatpy")
           ) return true;
+
+        // /api/bbs: GET만 JWT 스킵(목록/상세 공개), POST·PUT·DELETE는 JWT 검사하여 작성자 인증
+        if (path.startsWith("/api/bbs")) {
+            String method = request.getMethod();
+            if ("GET".equalsIgnoreCase(method)) {
+                log.info("JWT filter skip for path (GET): {}", path);
+                return true;
+            }
+            // POST, PUT, DELETE → JWT 필터 통과하여 principal 설정
+        }
 
         // 공개 API 및 Swagger 관련 경로는 JWT 체크 제외
         if (
@@ -57,8 +71,6 @@ public class JWTCheckFilter extends OncePerRequestFilter {
                 path.equals("/api-docs") ||
                 path.equals("/api/centers") ||
                 path.startsWith("/api/centers/") ||
-                path.startsWith("/api/bbs/") ||
-                path.startsWith("/api/bbs") ||
                 path.equals("/api/bbs_popularPostRealtimeList")
         ) {
             log.info("JWT filter skip for path: {}", path);
