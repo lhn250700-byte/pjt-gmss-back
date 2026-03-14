@@ -58,7 +58,7 @@ public class BotMsgController {
 
         Bot_Msg row;
         if (botId != null) {
-            row = botMsgRepository.findByBot_idAndMemberId_MemberId(botId, member.getMemberId()).orElse(null);
+            row = botMsgRepository.findByBotIdAndMemberId(botId, member.getMemberId()).orElse(null);
         } else {
             row = null;
         }
