@@ -105,6 +105,11 @@ public class BbsController {
         if (bbs.getMbti() == null) {
             bbs.setMbti("");
         }
+        if (member == null || member.getEmail() == null || member.getEmail().isBlank()) {
+            // GET 목록은 공개지만, 작성은 로그인 사용자만 허용
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "로그인이 필요합니다."));
+        }
         try {
             String memberId = member != null ? member.getEmail() : null;
             Bbs saved = bbsService.createPost(bbs, memberId);
