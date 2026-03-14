@@ -318,9 +318,8 @@ public class CnslService {
         cnslRepository.save(cnsl_Reg);
     }
 
-    // [상담사 리스트] 취업/커리어 해시태그 필터 포함
+    // [상담사 리스트] hashTags null이면 해시태그 미적용 쿼리, 있으면 해시태그 쿼리 (cast(null) 500 방지)
     public Page<CounselorListDto> getCounselorList(Pageable pageable, CounselorListReqeustDto requestDto) {
-        // 빈 리스트는 null로 넘겨 네이티브 쿼리 in() 바인딩 오류 방지
         List<String> cnslCate = requestDto.getCnslCate();
         if (cnslCate != null && cnslCate.isEmpty()) cnslCate = null;
         List<String> cnslTp = requestDto.getCnslTp();
@@ -329,14 +328,10 @@ public class CnslService {
         if (hashTags != null && (hashTags.length == 0 || (hashTags.length == 1 && (hashTags[0] == null || hashTags[0].isBlank())))) {
             hashTags = null;
         }
-        return cnslRepository.getCounselorList(
-                pageable,
-                cnslCate,
-                cnslTp,
-                requestDto.getMinPrice(),
-                requestDto.getMaxPrice(),
-                hashTags
-        );
+        if (hashTags == null) {
+            return cnslRepository.getCounselorList(pageable, cnslCate, cnslTp, requestDto.getMinPrice(), requestDto.getMaxPrice());
+        }
+        return cnslRepository.getCounselorListByHashTags(pageable, cnslCate, cnslTp, requestDto.getMinPrice(), requestDto.getMaxPrice(), hashTags);
     }
     
     // [상담사 뷰]
