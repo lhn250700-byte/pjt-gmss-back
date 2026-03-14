@@ -2,6 +2,7 @@ package com.study.spring.Bbs.entity;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.study.spring.Member.entity.Member;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -52,7 +53,8 @@ public class Bbs {
 	// @Column(name = "hash_tags", columnDefinition = "jsonb", insertable = false, updatable = false)
 	// private String hashTags;
 
-	// Vector 처리:pgvector-java 라이브러리 등을 사용하거나 float[]로 매핑합니다.
+	// Vector 처리:pgvector-java 라이브러리 등. 목록/상세 API 응답에서 제외(용량·선택적 컬럼 대비)
+	@JsonIgnore
 	@Column(columnDefinition = "vector(1536)")
 	private float[] embedding;
 }

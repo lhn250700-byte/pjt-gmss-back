@@ -12,12 +12,8 @@ import com.study.spring.Member.entity.Member;
 @Repository
 public interface MemberRepository extends JpaRepository<Member, String>{
 	
-//	member_id를 Email로 검증함
-	@Query("""
-			select m from Member
-			m left join fetch m.memberRoleList
-			where m.memberId = :email
-			""")
+//	member_id를 Email로 검증함 (fetch 제거 시 member_role_list 스키마 이슈로 500 방지; getMemberByEmail에서 @Transactional로 lazy 로딩)
+	@Query("select m from Member m where m.memberId = :email")
 	Optional<Member> findByEmail(@Param("email") String email);
 
 	boolean existsByNickname(String nickname);

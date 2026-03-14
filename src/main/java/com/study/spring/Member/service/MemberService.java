@@ -60,6 +60,7 @@ public class MemberService {
 	private final BbsRiskRepository bbsRiskRepository;
 
 
+	@Transactional(readOnly = true)
 	public MemberDto getMemberByEmail(String email) {
 		return memberRepository.findByEmail(email)
 			.map(member -> new MemberDto(

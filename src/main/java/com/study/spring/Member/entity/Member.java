@@ -22,6 +22,9 @@ import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.EnumType;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -42,6 +45,7 @@ public class Member {
 	private String pw;       // 비밀번호
 	private boolean social;
 	
+	@JsonIgnore // API 응답(예: Bbs 목록의 작성자) 직렬화 시 LazyInitializationException 방지
 	@ElementCollection(fetch=FetchType.LAZY)
 	@CollectionTable(
 			name = "member_role_list",
