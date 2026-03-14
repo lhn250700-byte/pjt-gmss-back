@@ -39,6 +39,7 @@ public class JWTCheckFilter extends OncePerRequestFilter {
           if (
 //                  !path.startsWith("/api/") ||
                   path.equals("/api/auth/refresh") ||
+                  path.equals("/api/auth/login") ||
                   path.equals("/api/member/login") ||
                   path.equals("/api/member/signup") ||
                   path.startsWith("/swagger-ui/") ||
@@ -62,6 +63,7 @@ public class JWTCheckFilter extends OncePerRequestFilter {
         if (
                 path.equals("/") ||
                 path.equals("/api/auth/refresh") ||
+                path.equals("/api/auth/login") ||
                 path.equals("/api/member/login") ||
                 path.equals("/api/member/signup") ||
                 path.startsWith("/api/member_InfoNicknameChk") ||

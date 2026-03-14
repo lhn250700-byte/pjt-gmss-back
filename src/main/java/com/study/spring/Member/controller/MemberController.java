@@ -10,9 +10,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -25,10 +28,57 @@ import com.study.spring.Member.entity.Member;
 public class MemberController {
 	@Autowired
 	MemberService memberService;
+	@Autowired
+	AuthenticationManager authenticationManager;
 
 	@GetMapping("/")
 	public String hello() {
 		return "hello";
+	}
+
+	/** REST 로그인: JSON 수신 후 인증, JWT·쿠키 반환 (form login 대체용) */
+	@PostMapping("/api/auth/login")
+	public ResponseEntity<Map<String, Object>> login(@RequestBody LoginRequest loginRequest, HttpServletResponse response) {
+		String username = loginRequest != null ? loginRequest.getUsername() : null;
+		String password = loginRequest != null ? loginRequest.getPassword() : null;
+		if (username == null || username.isBlank() || password == null || password.isBlank()) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+					.body(Map.of("error", "LOGIN_FAILED", "message", "이메일과 비밀번호를 입력해주세요."));
+		}
+		try {
+			Authentication auth = authenticationManager.authenticate(
+					new UsernamePasswordAuthenticationToken(username.trim(), password));
+			Object principal = auth.getPrincipal();
+			if (!(principal instanceof MemberDto memberDto)) {
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+						.body(Map.of("error", "LOGIN_FAILED", "message", "인증 정보를 처리할 수 없습니다."));
+			}
+			Map<String, Object> claims = memberDto.getClaims();
+			String accessToken = JWTUtil.generateToken(claims, 10);
+			String refreshToken = JWTUtil.generateToken(claims, 60 * 24);
+			Cookie accessTokenCookie = new Cookie("accessToken", accessToken);
+			accessTokenCookie.setHttpOnly(true);
+			accessTokenCookie.setPath("/");
+			accessTokenCookie.setMaxAge(60 * 10);
+			accessTokenCookie.setAttribute("SameSite", "None");
+			accessTokenCookie.setSecure(true);
+			response.addCookie(accessTokenCookie);
+			Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
+			refreshTokenCookie.setHttpOnly(true);
+			refreshTokenCookie.setPath("/");
+			refreshTokenCookie.setMaxAge(60 * 60 * 24);
+			refreshTokenCookie.setAttribute("SameSite", "None");
+			refreshTokenCookie.setSecure(true);
+			response.addCookie(refreshTokenCookie);
+			Map<String, Object> body = new HashMap<>(claims);
+			body.put("accessToken", accessToken);
+			log.info("REST 로그인 성공: {}", memberDto.getEmail());
+			return ResponseEntity.ok().body(body);
+		} catch (AuthenticationException e) {
+			log.warn("로그인 실패: {}", e.getMessage());
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+					.body(Map.of("error", "LOGIN_FAILED", "message", "이메일 또는 비밀번호를 확인해주세요."));
+		}
 	}
 
 	@PostMapping("/api/member/signup")
