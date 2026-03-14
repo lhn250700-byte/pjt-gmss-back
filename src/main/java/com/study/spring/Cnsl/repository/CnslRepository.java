@@ -491,6 +491,25 @@ public interface CnslRepository extends JpaRepository<Cnsl_Reg, Long> {
              )
             )
         order by a.cnsl_cnt , a.avg_eval_pt, m.member_id
+    """, countQuery = """
+        select count(m.member_id)
+        from member m
+        join member_role_list ml on m.member_id = ml.member_member_id and ml.member_role_list = 1
+        left join (
+            select member_id,
+                max(case when cnsl_tp = '1' then cnsl_price else 0 end) cnsl_1_price,
+                max(case when cnsl_tp = '2' then cnsl_price else 0 end) cnsl_2_price,
+                max(case when cnsl_tp = '3' then cnsl_price else 0 end) cnsl_3_price,
+                max(case when cnsl_tp = '4' then cnsl_price else 0 end) cnsl_4_price,
+                max(case when cnsl_tp = '5' then cnsl_price else 0 end) cnsl_5_price,
+                max(case when cnsl_tp = '6' then cnsl_price else 0 end) cnsl_6_price
+            from cnsl_info group by member_id
+        ) ci on m.member_id = ci.member_id
+        left join ( select cnsler_id from cnsl_reg where coalesce(del_yn,'N') = 'N' group by cnsler_id ) a on a.cnsler_id = m.member_id
+        where 1=1
+        and ( :cnslCate is null or exists ( select 1 from cnsl_reg crg2 where crg2.cnsler_id = m.member_id and crg2.cnsl_cate in (:cnslCate) and coalesce(crg2.del_yn,'N') = 'N' ) )
+        and ( :cnslTp is null or exists ( select 1 from cnsl_info ci2 where ci2.member_id = m.member_id and ci2.cnsl_tp in (:cnslTp) ) )
+        and ( :minPrice is null or ( (coalesce(ci.cnsl_1_price,0) between :minPrice and :maxPrice) or (coalesce(ci.cnsl_2_price,0) between :minPrice and :maxPrice) or (coalesce(ci.cnsl_3_price,0) between :minPrice and :maxPrice) or (coalesce(ci.cnsl_4_price,0) between :minPrice and :maxPrice) or (coalesce(ci.cnsl_5_price,0) between :minPrice and :maxPrice) or (coalesce(ci.cnsl_6_price,0) between :minPrice and :maxPrice) ) )
     """, nativeQuery = true)
     Page<CounselorListDto> getCounselorList(Pageable pageable, @Param("cnslCate") List<String> cnslCate, @Param("cnslTp") List<String> cnslTp, @Param("minPrice") Integer minPrice, @Param("maxPrice") Integer maxPrice);
 
