@@ -83,9 +83,18 @@ public class CustomSecurityConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        // ... 기존 CORS 설정 코드와 동일 ...
         CorsConfiguration config = new CorsConfiguration();
-        // (생략)
+        config.setAllowCredentials(true);
+        config.setAllowedOriginPatterns(java.util.List.of(
+            "https://www.gmss.site",
+            "https://gmss.site",
+            "https://testchat-alpha.vercel.app",
+            "http://localhost:5173",
+            "http://localhost:3000"
+        ));
+        config.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"));
+        config.setAllowedHeaders(java.util.List.of("Authorization", "Content-Type", "Accept", "Origin"));
+        config.setExposedHeaders(java.util.List.of("Authorization"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
