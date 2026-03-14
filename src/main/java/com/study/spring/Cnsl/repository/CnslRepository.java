@@ -431,7 +431,7 @@ public interface CnslRepository extends JpaRepository<Cnsl_Reg, Long> {
             ci.cnsl_5_price  AS cnsl5Price,
             ci.cnsl_6_price  AS cnsl6Price
         from member m -- member전제
-        join member_member_role_list ml on m.member_id = ml.member_member_id and ml.member_role_list = 1  -- 상담사만
+        join member_role_list ml on m.member_id = ml.member_member_id and ml.role = 1  -- 상담사만 (1=SYSTEM)
         left join (
         	select member_id,
                max(case when cnsl_tp = '1' then cnsl_price else 0 end ) cnsl_1_price,
@@ -490,7 +490,7 @@ public interface CnslRepository extends JpaRepository<Cnsl_Reg, Long> {
 			 or (ci.cnsl_6_price between :minPrice and :maxPrice)			
              )
             )
-			and (:hashTags is null or cardinality(cast(:hashTags as text[])) = 0 or jsonb_exists_any(m.hash_tags -> 'hashTag', cast(:hashTags as text[])))
+			and (:hashTags is null or cardinality(cast(:hashTags as text[])) = 0 or (m.hash_tags is not null and jsonb_exists_any(m.hash_tags -> 'hashTag', cast(:hashTags as text[]))))
         order by a.cnsl_cnt , a.avg_eval_pt, m.member_id
     """, nativeQuery = true)
     Page<CounselorListDto> getCounselorList(Pageable pageable, @Param("cnslCate") List<String> cnslCate, @Param("cnslTp") List<String> cnslTp, @Param("minPrice") Integer minPrice, @Param("maxPrice") Integer maxPrice, @Param("hashTags") String[] hashTags);
@@ -512,7 +512,7 @@ public interface CnslRepository extends JpaRepository<Cnsl_Reg, Long> {
 		    ci.cnsl_5_price  AS cnsl5Price,
 		    ci.cnsl_6_price  AS cnsl6Price
 		from member m -- member전제
-		join member_member_role_list ml on m.member_id = ml.member_member_id and ml.member_role_list = 1  -- 상담사만
+		join member_role_list ml on m.member_id = ml.member_member_id and ml.role = 1  -- 상담사만 (1=SYSTEM)
 		left join (
 		    select member_id,
 		           max(case when cnsl_tp = '1' then cnsl_price else 0 end ) cnsl_1_price,
