@@ -35,7 +35,8 @@ public class Bot_Msg {
     @Column
 	private Integer bot_id;
 	
-	@Column(nullable = false)
+	/** 기존 행이 있을 때 DDL 실패 방지: nullable + 기본값은 애플리케이션에서 설정 */
+	@Column(nullable = true)
 	private Integer session_id;
 	
 	@ManyToOne(fetch = FetchType.LAZY)

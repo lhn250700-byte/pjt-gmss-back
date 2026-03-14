@@ -1,3 +1,5 @@
+package com.study.spring.config; // 이 줄을 반드시 추가하세요!
+
 import com.study.spring.Member.service.CustomOAuth2UserService;
 import com.study.spring.security.filter.JWTCheckFilter;
 import com.study.spring.security.handler.APILoginFailHandler;
@@ -9,8 +11,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -24,11 +24,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class CustomSecurityConfig {
 
     private final CustomOAuth2UserService customOAuth2UserService;
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception { // 메서드 선언 필수
