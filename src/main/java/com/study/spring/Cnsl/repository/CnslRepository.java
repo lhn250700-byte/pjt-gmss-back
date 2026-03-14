@@ -490,7 +490,7 @@ public interface CnslRepository extends JpaRepository<Cnsl_Reg, Long> {
 			 or (ci.cnsl_6_price between :minPrice and :maxPrice)			
              )
             )
-			and (:hashTags is null or cardinality(cast(:hashTags as text[])) = 0 or (m.hash_tags is not null and jsonb_exists_any(m.hash_tags -> 'hashTag', cast(:hashTags as text[]))))
+			and (:hashTags is null or cardinality(cast(:hashTags as text[])) = 0 or (m.hash_tags is not null and exists ( select 1 from jsonb_array_elements_text(m.hash_tags -> 'hashTag') as tag where tag = any(cast(:hashTags as text[])) )))
         order by a.cnsl_cnt , a.avg_eval_pt, m.member_id
     """, nativeQuery = true)
     Page<CounselorListDto> getCounselorList(Pageable pageable, @Param("cnslCate") List<String> cnslCate, @Param("cnslTp") List<String> cnslTp, @Param("minPrice") Integer minPrice, @Param("maxPrice") Integer maxPrice, @Param("hashTags") String[] hashTags);
