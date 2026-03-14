@@ -320,15 +320,19 @@ public class CnslService {
 
     // [상담사 리스트]
     public Page<CounselorListDto> getCounselorList(Pageable pageable, CounselorListReqeustDto requestDto) {
-        // hashTags가 비어 있거나 [''] 하나만 있으면 해시태그 필터 미적용 (null 전달)
+        // 빈 리스트/배열은 null로 넘겨 네이티브 쿼리 in() 바인딩 오류 방지
+        List<String> cnslCate = requestDto.getCnslCate();
+        if (cnslCate != null && cnslCate.isEmpty()) cnslCate = null;
+        List<String> cnslTp = requestDto.getCnslTp();
+        if (cnslTp != null && cnslTp.isEmpty()) cnslTp = null;
         String[] hashTags = requestDto.getHashTags();
-        if (hashTags != null && hashTags.length == 1 && (hashTags[0] == null || hashTags[0].isBlank())) {
+        if (hashTags != null && (hashTags.length == 0 || (hashTags.length == 1 && (hashTags[0] == null || hashTags[0].isBlank())))) {
             hashTags = null;
         }
         return cnslRepository.getCounselorList(
                 pageable,
-                requestDto.getCnslCate(),
-                requestDto.getCnslTp(),
+                cnslCate,
+                cnslTp,
                 requestDto.getMinPrice(),
                 requestDto.getMaxPrice(),
                 hashTags

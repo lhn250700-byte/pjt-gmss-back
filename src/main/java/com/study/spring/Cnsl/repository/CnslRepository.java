@@ -431,7 +431,7 @@ public interface CnslRepository extends JpaRepository<Cnsl_Reg, Long> {
             ci.cnsl_5_price  AS cnsl5Price,
             ci.cnsl_6_price  AS cnsl6Price
         from member m -- member전제
-        join member_role_list ml on m.member_id = ml.member_member_id and ( coalesce(ml.role, ml.member_role_list) = 1 )  -- 상담사만 (1=SYSTEM; role 또는 member_role_list 컬럼 모두 지원)
+        join member_role_list ml on m.member_id = ml.member_member_id and ml.member_role_list = 1  -- 상담사만 (1=SYSTEM). 역할 값은 member_role_list 컬럼에 저장됨
         left join (
         	select member_id,
                max(case when cnsl_tp = '1' then cnsl_price else 0 end ) cnsl_1_price,
@@ -512,7 +512,7 @@ public interface CnslRepository extends JpaRepository<Cnsl_Reg, Long> {
 		    ci.cnsl_5_price  AS cnsl5Price,
 		    ci.cnsl_6_price  AS cnsl6Price
 		from member m -- member전제
-		join member_role_list ml on m.member_id = ml.member_member_id and ( coalesce(ml.role, ml.member_role_list) = 1 )  -- 상담사만 (1=SYSTEM; role 또는 member_role_list 컬럼 모두 지원)
+		join member_role_list ml on m.member_id = ml.member_member_id and ml.member_role_list = 1  -- 상담사만 (1=SYSTEM). 역할 값은 member_role_list 컬럼에 저장됨
 		left join (
 		    select member_id,
 		           max(case when cnsl_tp = '1' then cnsl_price else 0 end ) cnsl_1_price,
