@@ -52,19 +52,30 @@ public class CnslController {
 
 	/** AI 즉시 상담 생성 (cnsl_tp=3). 마이페이지 목록·재진입에 사용 */
 	@PostMapping("/api/cnslReg_createAi")
-	public ResponseEntity<?> createAiCounseling(@AuthenticationPrincipal String memberId) {
+	public ResponseEntity<?> createAiCounseling(
+			@AuthenticationPrincipal(expression = "username") String memberId) {
+		if (memberId == null || memberId.isBlank()) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요합니다.");
+		}
 		try {
-			Long id = cnslService.reserveCounselingAi(memberId);
+			Long id = cnslService.reserveCounselingAi(memberId.trim());
 			return ResponseEntity.ok(id);
+		} catch (IllegalArgumentException e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
 		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Apply failure: " + e.getMessage());
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body("Apply failure: " + (e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()));
 		}
 	}
 
 	/** 진행 중 AI 상담 ID (재진입 리다이렉트용) */
 	@GetMapping("/api/mypage/activeAiCnsl")
-	public ResponseEntity<?> getActiveAiCnsl(@AuthenticationPrincipal String memberId) {
-		Long cnslId = cnslService.findActiveAiCnslId(memberId);
+	public ResponseEntity<?> getActiveAiCnsl(
+			@AuthenticationPrincipal(expression = "username") String memberId) {
+		if (memberId == null || memberId.isBlank()) {
+			return ResponseEntity.ok(java.util.Map.of());
+		}
+		Long cnslId = cnslService.findActiveAiCnslId(memberId.trim());
 		return ResponseEntity.ok(cnslId != null ? java.util.Map.of("cnslId", cnslId) : java.util.Map.of());
 	}
 	
@@ -302,20 +313,26 @@ public class CnslController {
 	// 마이페이지 상담내역 (cnslTp: 3=AI상담만, counselor=상담사상담만, 미지정=전체)
 	@GetMapping("/api/mypage/cnsllist")
 	public ResponseEntity<Page<MyCnslListDto>> getmycnsllist(
-			@AuthenticationPrincipal String memberId,
+			@AuthenticationPrincipal(expression = "username") String memberId,
 			@PageableDefault(size = 10, sort = "created_at", direction = Sort.Direction.DESC)
 			Pageable pageable,
 			@RequestParam(required = false) String cnslTp) {
-		Page<MyCnslListDto> list = cnslService.findmycnsllist(memberId, pageable, cnslTp);
+		if (memberId == null || memberId.isBlank()) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+		}
+		Page<MyCnslListDto> list = cnslService.findmycnsllist(memberId.trim(), pageable, cnslTp);
 		return ResponseEntity.ok(list);
 	}
-	
+
 	// 마이페이지 상담내역-상담사 상세
 	@GetMapping("/api/mypage/cnsllist/{cnslId}")
 	public ResponseEntity<CnslDetailDto> getcnslDetail(
-			@AuthenticationPrincipal String memberId,
-			@PathVariable("cnslId") Long cnslId){
-		return cnslService.findcnslDetail(cnslId, memberId)
+			@AuthenticationPrincipal(expression = "username") String memberId,
+			@PathVariable("cnslId") Long cnslId) {
+		if (memberId == null || memberId.isBlank()) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+		}
+		return cnslService.findcnslDetail(cnslId, memberId.trim())
 				.map(ResponseEntity::ok)
 				.orElse(ResponseEntity.notFound().build());
 	}

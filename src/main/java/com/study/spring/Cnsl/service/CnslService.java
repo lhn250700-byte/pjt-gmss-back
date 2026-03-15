@@ -177,15 +177,18 @@ public class CnslService {
     /** AI 즉시 상담 등록 (cnsl_tp=3, 상담사 없음). 마이페이지 목록에 노출되도록 동일 DB에 저장 */
     @Transactional
     public Long reserveCounselingAi(String memberId) {
-        Member member = memberRepository.findByEmail(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자가 없습니다."));
+        if (memberId == null || memberId.isBlank()) {
+            throw new IllegalArgumentException("로그인이 필요합니다.");
+        }
+        Member member = memberRepository.findByEmail(memberId.trim())
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다. (member_id=" + memberId + ")"));
         LocalDate today = LocalDate.now();
         LocalTime now = LocalTime.now();
         LocalTime endTime = now.plusHours(1);
 
         Cnsl_Reg cnslReg = Cnsl_Reg.builder()
                 .memberId(member)
-                .cnslerId(null)
+                .cnslerId(null) // AI 상담은 상담사 없음. DB의 cnsler_id 컬럼이 NULL 허용이어야 함.
                 .cnslCate("1")
                 .cnslTp("3")
                 .cnslTitle("AI 즉시 상담")
@@ -197,7 +200,13 @@ public class CnslService {
                 .cnslTodoYn("Y")
                 .delYn("N")
                 .build();
-        cnslRepository.save(cnslReg);
+        try {
+            cnslRepository.save(cnslReg);
+        } catch (Exception e) {
+            log.error("AI 상담 cnsl_reg 저장 실패 memberId={}", memberId, e);
+            throw new IllegalStateException(
+                    "상담 등록 저장에 실패했습니다. DB의 cnsl_reg.cnsler_id가 NULL 허용인지 확인하세요. " + e.getMessage());
+        }
         return cnslReg.getCnslId();
     }
 
