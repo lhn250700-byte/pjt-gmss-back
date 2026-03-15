@@ -57,6 +57,78 @@ public interface BbsRepository extends JpaRepository<Bbs, Integer> {
     """, nativeQuery = true)
     List<PopularPostDto> findPopularPosts(@Param("period") String period);
 
+	/** 실시간 인기글: 최근 1일 (period 파라미터 비교 없이 고정 조건으로 바인딩 이슈 방지) */
+	@Query(value = """
+        select
+        b.bbs_id as "bbsId", b.title as "title", b.content as "content", b.views as "views", b.created_at as "createdAt",
+        COALESCE(count(distinct c.cmt_id), 0) as "commentCount",
+        (select COALESCE(COUNT(*), 0) from bbs_like bl WHERE bl.bbs_id = b.bbs_id and bl.is_like = true) as "bbsLikeCount",
+        (select COALESCE(COUNT(*), 0) from bbs_like bl WHERE bl.bbs_id = b.bbs_id and bl.is_like = false) as "bbsDisLikeCount",
+        COALESCE(SUM(cl_sum.cmt_like_cnt), 0) AS "cmtLikeCount",
+        COALESCE(SUM(cl_sum.cmt_dislike_cnt), 0) as "cmtDisLikeCount"
+        from bbs b
+        left join bbs_comment c on b.bbs_id = c.bbs_id and COALESCE(c.del_yn, 'N') = 'N'
+        left join (select cmt_id,
+                          COALESCE(SUM(case when is_like = true then 1 else 0 end), 0) cmt_like_cnt,
+                          COALESCE(SUM(case when is_like = false then 1 else 0 end), 0) cmt_dislike_cnt
+                     from cmt_like
+                     group by cmt_id) cl_sum on c.cmt_id = cl_sum.cmt_id
+        where COALESCE(b.del_yn, 'N') = 'N'
+        and b.bbs_div <> 'NOTI'
+        and b.created_at >= NOW() - INTERVAL '1 day'
+        group by b.bbs_id, b.title, b.content, b.views, b.created_at
+        order by b.bbs_id
+    """, nativeQuery = true)
+	List<PopularPostDto> findPopularPostsRealtime();
+
+	/** 주간 인기글: 최근 7일 */
+	@Query(value = """
+        select
+        b.bbs_id as "bbsId", b.title as "title", b.content as "content", b.views as "views", b.created_at as "createdAt",
+        COALESCE(count(distinct c.cmt_id), 0) as "commentCount",
+        (select COALESCE(COUNT(*), 0) from bbs_like bl WHERE bl.bbs_id = b.bbs_id and bl.is_like = true) as "bbsLikeCount",
+        (select COALESCE(COUNT(*), 0) from bbs_like bl WHERE bl.bbs_id = b.bbs_id and bl.is_like = false) as "bbsDisLikeCount",
+        COALESCE(SUM(cl_sum.cmt_like_cnt), 0) AS "cmtLikeCount",
+        COALESCE(SUM(cl_sum.cmt_dislike_cnt), 0) as "cmtDisLikeCount"
+        from bbs b
+        left join bbs_comment c on b.bbs_id = c.bbs_id and COALESCE(c.del_yn, 'N') = 'N'
+        left join (select cmt_id,
+                          COALESCE(SUM(case when is_like = true then 1 else 0 end), 0) cmt_like_cnt,
+                          COALESCE(SUM(case when is_like = false then 1 else 0 end), 0) cmt_dislike_cnt
+                     from cmt_like
+                     group by cmt_id) cl_sum on c.cmt_id = cl_sum.cmt_id
+        where COALESCE(b.del_yn, 'N') = 'N'
+        and b.bbs_div <> 'NOTI'
+        and b.created_at >= NOW() - INTERVAL '7 days'
+        group by b.bbs_id, b.title, b.content, b.views, b.created_at
+        order by b.bbs_id
+    """, nativeQuery = true)
+	List<PopularPostDto> findPopularPostsWeekly();
+
+	/** 월간 인기글: 최근 1개월 */
+	@Query(value = """
+        select
+        b.bbs_id as "bbsId", b.title as "title", b.content as "content", b.views as "views", b.created_at as "createdAt",
+        COALESCE(count(distinct c.cmt_id), 0) as "commentCount",
+        (select COALESCE(COUNT(*), 0) from bbs_like bl WHERE bl.bbs_id = b.bbs_id and bl.is_like = true) as "bbsLikeCount",
+        (select COALESCE(COUNT(*), 0) from bbs_like bl WHERE bl.bbs_id = b.bbs_id and bl.is_like = false) as "bbsDisLikeCount",
+        COALESCE(SUM(cl_sum.cmt_like_cnt), 0) AS "cmtLikeCount",
+        COALESCE(SUM(cl_sum.cmt_dislike_cnt), 0) as "cmtDisLikeCount"
+        from bbs b
+        left join bbs_comment c on b.bbs_id = c.bbs_id and COALESCE(c.del_yn, 'N') = 'N'
+        left join (select cmt_id,
+                          COALESCE(SUM(case when is_like = true then 1 else 0 end), 0) cmt_like_cnt,
+                          COALESCE(SUM(case when is_like = false then 1 else 0 end), 0) cmt_dislike_cnt
+                     from cmt_like
+                     group by cmt_id) cl_sum on c.cmt_id = cl_sum.cmt_id
+        where COALESCE(b.del_yn, 'N') = 'N'
+        and b.bbs_div <> 'NOTI'
+        and b.created_at >= NOW() - INTERVAL '1 month'
+        group by b.bbs_id, b.title, b.content, b.views, b.created_at
+        order by b.bbs_id
+    """, nativeQuery = true)
+	List<PopularPostDto> findPopularPostsMonthly();
+
 	// 마이페이지 게시글 리스트
 	@Query(value = """
 			select
@@ -117,14 +189,14 @@ public interface BbsRepository extends JpaRepository<Bbs, Integer> {
 			""",nativeQuery = true)
 	Page<CommentListDto> getCommentListByMemberId(@Param("memberId") String memberId, Pageable pageable);
 
-	// 삭제 여부에 따른 게시글 목록 조회 (최신순). EntityGraph로 작성자(memberId) 함께 로딩해 목록 직렬화 시 LazyInitializationException 방지
+	// 삭제 여부에 따른 게시글 목록 조회 (최신순). del_yn null은 미삭제로 간주해 목록에 포함
 	@EntityGraph(attributePaths = {"memberId"})
-	@Query("SELECT b FROM Bbs b WHERE b.delYn = :delYn ORDER BY b.created_at DESC")
+	@Query("SELECT b FROM Bbs b WHERE (b.delYn = :delYn OR (b.delYn IS NULL AND :delYn = 'N')) ORDER BY b.created_at DESC")
 	Page<Bbs> findByDelYnOrderByCreatedAtDesc(@Param("delYn") String delYn, Pageable pageable);
 
-	// 게시물 분류 및 삭제 여부에 따른 조회
+	// 게시물 분류 및 삭제 여부에 따른 조회 (del_yn null = 미삭제)
 	@EntityGraph(attributePaths = {"memberId"})
-	@Query("SELECT b FROM Bbs b WHERE b.bbs_div = :bbsDiv AND b.delYn = :delYn ORDER BY b.created_at DESC")
+	@Query("SELECT b FROM Bbs b WHERE b.bbs_div = :bbsDiv AND (b.delYn = :delYn OR (b.delYn IS NULL AND :delYn = 'N')) ORDER BY b.created_at DESC")
 	Page<Bbs> findByBbsDivAndDelYnOrderByCreatedAtDesc(@Param("bbsDiv") String bbsDiv,
 	                                                  @Param("delYn") String delYn,
 	                                                  Pageable pageable);

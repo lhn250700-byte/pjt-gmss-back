@@ -55,9 +55,9 @@ public class BbsService {
     @Autowired(required = false)
     EmbeddingService embeddingService;
 
-    // [실시간 인기글]
+    // [실시간 인기글] — 전용 쿼리 사용(period 바인딩 이슈 방지)
     public List<PopularPostClassDto> findRealtimePopularPosts(String period) {
-        List<PopularPostDto> results = bbsRepository.findPopularPosts(period);
+        List<PopularPostDto> results = bbsRepository.findPopularPostsRealtime();
         return results.stream().map(r -> PopularPostClassDto
                 .builder()
                 .bbsId(r.getBbsId())
@@ -91,9 +91,9 @@ public class BbsService {
         return score;
 	}
 
-    // [주간 인기글]
+    // [주간 인기글] — 전용 쿼리 사용
     public List<PopularPostClassDto> findWeeklyPopularPosts(String period) {
-        List<PopularPostDto> results = bbsRepository.findPopularPosts(period);
+        List<PopularPostDto> results = bbsRepository.findPopularPostsWeekly();
         return results.stream().map(r -> PopularPostClassDto
                 .builder()
                 .bbsId(r.getBbsId())
@@ -125,9 +125,9 @@ public class BbsService {
         return score;
 	}
 
-    // [월간 인기글]
+    // [월간 인기글] — 전용 쿼리 사용
     public List<PopularPostClassDto> findMonthlyPopularPosts(String period) {
-        List<PopularPostDto> results = bbsRepository.findPopularPosts(period);
+        List<PopularPostDto> results = bbsRepository.findPopularPostsMonthly();
         return results.stream().map(r -> PopularPostClassDto
                         .builder()
                         .bbsId(r.getBbsId())
@@ -182,6 +182,10 @@ public class BbsService {
         if (bbs.getMbti() == null) {
             bbs.setMbti("");
         }
+        // 글 작성 시 삭제 여부 기본값: null이면 'N'으로 저장
+        if (bbs.getDelYn() == null || bbs.getDelYn().isBlank()) {
+            bbs.setDelYn("N");
+        }
         // 게시글 저장
         Bbs saved = bbsRepository.save(bbs);
         log.info("게시글 작성 완료: bbsId={}", saved.getBbsId());
@@ -221,13 +225,21 @@ public class BbsService {
     }
     
     /**
-     * 게시글 상세 조회 (member 한 번에 로딩)
+     * 게시글 상세 조회 (member 한 번에 로딩).
+     * 없거나 삭제된 글(del_yn='Y')이면 404용 Optional.empty() 반환.
      */
     @Transactional
     public Optional<Bbs> getPostById(Integer bbsId) {
-    	Optional<Bbs> bbs = bbsRepository.findByIdWithMember(bbsId); 
-    	bbs.get().setViews(bbs.get().getViews() + 1);
-        return bbs;
+        Optional<Bbs> bbs = bbsRepository.findByIdWithMember(bbsId);
+        if (bbs.isEmpty()) {
+            return Optional.empty();
+        }
+        Bbs entity = bbs.get();
+        if (entity.getDelYn() != null && "Y".equalsIgnoreCase(entity.getDelYn())) {
+            return Optional.empty();
+        }
+        entity.setViews(entity.getViews() == null ? 1 : entity.getViews() + 1);
+        return Optional.of(entity);
     }
     
     /**

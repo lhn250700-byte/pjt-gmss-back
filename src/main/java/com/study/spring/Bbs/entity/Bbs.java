@@ -42,7 +42,15 @@ public class Bbs {
 	private String imgUrl;	
 	@Column(name="del_yn")
 	private String delYn = "N";
-	
+
+	/** INSERT 시 del_yn이 null이면 'N'으로 설정 (JSON 역직렬화 등으로 null이 들어와도 DB에는 N 저장) */
+	@PrePersist
+	public void prePersist() {
+		if (this.delYn == null || this.delYn.isBlank()) {
+			this.delYn = "N";
+		}
+	}
+
 	@CreationTimestamp
     @Column
     private LocalDateTime created_at;
