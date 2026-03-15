@@ -669,6 +669,15 @@ public interface CnslRepository extends JpaRepository<Cnsl_Reg, Long> {
 		where m.member_id = :memberId
 	""", nativeQuery = true)
     CounselorListDto getCounselor(@Param("memberId") String memberId);
+
+    @Modifying(clearAutomatically = true)
+    @Query("""
+    UPDATE Cnsl_Reg r
+    SET r.memberId = :delMember
+    WHERE r.memberId = :member
+""")
+    int updateMember(@Param("member") Member member,
+                     @Param("delMember") Member deletedMember);
 	
 	// 마이페이지 상담 내역 상담사 리스트
 	@Query(value = """

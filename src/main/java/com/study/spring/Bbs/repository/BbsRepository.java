@@ -250,4 +250,12 @@ public interface BbsRepository extends JpaRepository<Bbs, Integer> {
 		LIMIT :limit
 		""", nativeQuery = true)
 	List<Integer> findSimilarBbsIds(@Param("embedding") String embedding, @Param("limit") int limit);
+
+	@Modifying(clearAutomatically = true)
+	@Query("""
+		UPDATE Bbs b
+		SET b.memberId = :delMember
+		WHERE b.memberId = :member
+	""")
+	void updateMember(@Param("member") Member member, @Param("delMember") Member deletedMember);
 }
