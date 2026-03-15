@@ -394,19 +394,19 @@ public interface CnslRepository extends JpaRepository<Cnsl_Reg, Long> {
               WHEN r.cnsl_stat = 'A' THEN '상담 신청'
               WHEN r.cnsl_stat = 'B' THEN '상담 예정'
               WHEN r.cnsl_stat = 'C' THEN '상담 진행 중'
-              WHEN r.cnsl_stat = 'D' THEN '상담 완료'
-              ELSE '!'
-          END AS cnsl_stat_nm,
-          m1.nickname,
-          m2.mbti,
-          get_code_nm('gender', m2.gender) || '성' AS gender,
-          '만 ' || EXTRACT(YEAR FROM age(current_date, m2.birth)) ||'세' AS age,
-          m2.text,
-          m2.img_url AS imgUrl
-        from cnsl_reg r
-        join member m1 on m1.member_id = r.member_id
-        join member m2 on m2.member_id = r.cnsler_id
-        where m2.member_id = :email
+          WHEN r.cnsl_stat = 'D' THEN '상담 완료'
+          ELSE '!'
+      END AS cnsl_stat_nm,
+      m1.nickname,
+      m1.mbti,
+      get_code_nm('gender', m1.gender) || '성' AS gender,
+      '만 ' || EXTRACT(YEAR FROM age(current_date, m1.birth)) ||'세' AS age,
+      m1.text,
+      m1.img_url AS imgUrl
+    from cnsl_reg r
+    join member m1 on m1.member_id = r.member_id
+    join member m2 on m2.member_id = r.cnsler_id
+    where m2.member_id = :email
         and r.cnsl_id = :cnslId
     	and r.del_yn = 'N'
     """, nativeQuery = true)

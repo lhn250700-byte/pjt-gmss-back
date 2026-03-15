@@ -59,6 +59,8 @@ public class MemberService {
 	private final CnslReviewRepository cnslReviewRepository;
 	private final BbsRiskRepository bbsRiskRepository;
 
+	private static final String DELETED_MEMBER_ID = "deleted@system.local";
+
 
 	@Transactional(readOnly = true)
 	public MemberDto getMemberByEmail(String email) {
@@ -267,52 +269,46 @@ public class MemberService {
 	}
 
 	// [회원 탈퇴]
-//	@Transactional
-//	public void deleteMember(String email) {
-//		Member member = memberRepository.findByEmail(email)
-//				.orElseThrow(() -> new IllegalArgumentException("해당 회원을 찾을 수 없습니다. email : " + email));
-//		Member newMember = new Member();
-//		String name = generateDeleteNickname();
-//
-//		newMember.setMemberId("deleted_member" + name);
-//		newMember.setNickname(name);
-//
-//		memberRepository.save(newMember);
-//
-//		if (member.getMemberRoleList().contains(1)) {
-//			cnslInfoRepository.deleteByMemberId(member);
-//		}
-//		pointHistoryRepository.deleteByMemberId(member);
-//		paymentRepository.deleteByMemberId(member);
-//		walletRepository.deleteByMemberId(email);
-//		member.clearRole();
-//
-//		Optional<Bbs> bbs = bbsRepository.findByMemberId(member);
-//		Optional<Bbs_Comment> bbsComment = bbsCommentRepository.findByMemberId(member);
-//		Optional<Bbs_Like> bbsLike = bbsLikeRepository.findByMemberId(member);
-//		Optional<Cmt_Like> cmtLike = cmtLikeRepository.findByMemberId(member);
-//		Optional<Cnsl_Reg> cnslReg = cnslRepository.findByMemberId(member);
-//		Optional<Cnsl_Resp> cnslResp = cnslRespRepository.findByMemberId(member);
-//		Optional<Cnsl_Review> cnslReview = cnslReviewRepository.findByMemberId(member);
-//		Optional<BbsRisk> bbsRisk = bbsRiskRepository.findByMemberId(email);
-//
-//		bbs.ifPresent(b -> b.setMemberId(newMember));
-//		bbsComment.ifPresent(c -> c.setMemberId(newMember));
-//		bbsLike.ifPresent(l -> l.setMemberId(newMember));
-//		cmtLike.ifPresent(cl -> cl.setMemberId(newMember));
-//		cnslReg.ifPresent(r -> r.setMemberId(newMember));
-//		cnslResp.ifPresent(r -> r.setMemberId(newMember));
-//		cnslReview.ifPresent(r -> r.setMemberId(newMember));
-//		bbsRisk.ifPresent(br -> br.setMemberId(newMember.getMemberId()));
-//
-//		memberRepository.delete(member);
-//	}
-//
-//	public String generateDeleteNickname() {
-//		String anonNickname = "탈퇴회원_" + ThreadLocalRandom.current().nextInt(100, 1000)
-//				+ "_" + System.currentTimeMillis() % 10000;
-//		return anonNickname;
-//	}
+	@Transactional
+	public void deleteMember(String email) {
+
+		// 1. 삭제 대상 회원 조회
+		Member member = memberRepository.findByEmail(email)
+				.orElseThrow(() -> new IllegalArgumentException("해당 회원을 찾을 수 없습니다. email : " + email));
+
+		// 2. 탈퇴 계정 조회
+		Member deletedMember = memberRepository.findByMemberId(DELETED_MEMBER_ID)
+				.orElseThrow(() -> new IllegalStateException("탈퇴용 계정이 존재하지 않습니다."));
+
+		// 3. 상담사면 상담정보 삭제
+		if (member.getMemberRoleList().contains(1)) {
+			cnslInfoRepository.deleteByMemberId(member);
+		}
+
+		// 4. 금융 관련 데이터 삭제
+		pointHistoryRepository.deleteByMemberId(member);
+		paymentRepository.deleteByMemberId(member);
+		walletRepository.deleteByMemberId(email);
+
+		// 5. 게시글 / 댓글 / 좋아요 작성자 변경 (벌크 update)
+		bbsRepository.updateMember(member, deletedMember);
+		bbsCommentRepository.updateMember(member, deletedMember);
+		bbsLikeRepository.updateMember(member, deletedMember);
+		cmtLikeRepository.updateMember(member, deletedMember);
+
+		cnslRepository.updateMember(member, deletedMember);
+		cnslRespRepository.updateMember(member, deletedMember);
+		cnslReviewRepository.updateMember(member, deletedMember);
+
+		// 6. 로그 테이블 (String memberId)
+		bbsRiskRepository.updateMember(member.getMemberId(), DELETED_MEMBER_ID);
+
+		// 7. 역할 제거
+		member.clearRole();
+
+		// 8. 회원 삭제
+		memberRepository.delete(member);
+	}
 
 	// 이 부분을 추가하면 에러가 사라집니다!
 	private void updateCommonInfo(Member member, MemberModifyDto dto) {
