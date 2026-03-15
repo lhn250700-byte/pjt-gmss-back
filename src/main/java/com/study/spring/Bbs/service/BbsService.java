@@ -79,16 +79,25 @@ public class BbsService {
     }
 	
 	public Double calculateRealtimeScore(PopularPostDto popularPostDto) {
-		// score = (조회수 * 1) + (댓글 수 * 3) + (게시글 좋아요 수 * 5) + (댓글 좋아요 수 * 1.5) - (게시글
-		// 싫어요 * 6) - (댓글 싫어요 * 2) / (경과시간 + 1)^α(1.0, 1.2 ~ 1.5)
-		Duration duration = Duration.between(popularPostDto.getCreatedAt(), LocalDateTime.now());
-		Double time = duration.getSeconds() / 3600.0;
-		Double timeScore = Math.pow(time + 1, 1.2);
-		Double score = (popularPostDto.getViews() + (popularPostDto.getCommentCount() * 3)
-				+ (popularPostDto.getBbsLikeCount() * 5) + (popularPostDto.getCmtLikeCount() * 1.5)
-				- (popularPostDto.getBbsDisLikeCount() * 6) - (popularPostDto.getCmtDisLikeCount() * 2)) / timeScore;
+		// score = (조회수 * 1) + (댓글 수 * 3) + ... / (경과시간 + 1)^α — null-safe
+		LocalDateTime createdAt = popularPostDto.getCreatedAt();
+		Duration duration = createdAt != null
+				? Duration.between(createdAt, LocalDateTime.now())
+				: Duration.ZERO;
+		double time = duration.getSeconds() / 3600.0;
+		double timeScore = Math.pow(time + 1, 1.2);
+		int views = nullToZero(popularPostDto.getViews());
+		int commentCount = nullToZero(popularPostDto.getCommentCount());
+		int bbsLike = nullToZero(popularPostDto.getBbsLikeCount());
+		int cmtLike = nullToZero(popularPostDto.getCmtLikeCount());
+		int bbsDislike = nullToZero(popularPostDto.getBbsDisLikeCount());
+		int cmtDislike = nullToZero(popularPostDto.getCmtDisLikeCount());
+		return (views + (commentCount * 3) + (bbsLike * 5) + (cmtLike * 1.5)
+				- (bbsDislike * 6) - (cmtDislike * 2)) / timeScore;
+	}
 
-        return score;
+	private static int nullToZero(Integer v) {
+		return v != null ? v : 0;
 	}
 
     // [주간 인기글] — 전용 쿼리 사용
@@ -116,13 +125,15 @@ public class BbsService {
 
 
 	public Double calculateWeeklyScore(PopularPostDto popularPostDto) {
-		// weekly_score = (주간 조회수 * 1) + (주간 댓글 수 * 2) + (주간 게시글 좋아요 수 * 3) + (주간 댓글 좋아요
-		// 수 * 1) - (주간 게시글 싫어요 수 * 4) - (주간 댓글 싫어요 * 1.5)
-		Double score = popularPostDto.getViews() + (popularPostDto.getCommentCount() * 2)
-				+ (popularPostDto.getBbsLikeCount() * 3) + popularPostDto.getCmtLikeCount()
-				- (popularPostDto.getBbsDisLikeCount() * 4) - (popularPostDto.getCmtDisLikeCount() * 1.5);
-
-        return score;
+		// weekly_score = (주간 조회수 * 1) + (주간 댓글 수 * 2) + ... — null-safe
+		int views = nullToZero(popularPostDto.getViews());
+		int commentCount = nullToZero(popularPostDto.getCommentCount());
+		int bbsLike = nullToZero(popularPostDto.getBbsLikeCount());
+		int cmtLike = nullToZero(popularPostDto.getCmtLikeCount());
+		int bbsDislike = nullToZero(popularPostDto.getBbsDisLikeCount());
+		int cmtDislike = nullToZero(popularPostDto.getCmtDisLikeCount());
+		return views + (commentCount * 2) + (bbsLike * 3) + cmtLike
+				- (bbsDislike * 4) - (cmtDislike * 1.5);
 	}
 
     // [월간 인기글] — 전용 쿼리 사용
