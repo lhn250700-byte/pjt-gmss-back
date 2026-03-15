@@ -7,6 +7,8 @@ services:
     build:
       context: .
     container_name: gmss-spring
+    ports:
+      - '8080:8080'   # 호스트에서 curl localhost:8080 으로 API 직접 확인용 (nginx 경유 없이)
     environment:
       - CORS_ORIGINS=https://gmss.site,https://www.gmss.site,https://testchat-alpha.vercel.app
       - FRONTEND_BASE_URL=https://www.gmss.site
