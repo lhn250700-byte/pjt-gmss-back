@@ -279,13 +279,14 @@ public class CnslController {
 		return ResponseEntity.ok(revenuePage);
 	}
 	
-	// 마이페이지 상담내역-상담사
+	// 마이페이지 상담내역 (cnslTp: 3=AI상담만, counselor=상담사상담만, 미지정=전체)
 	@GetMapping("/api/mypage/cnsllist")
 	public ResponseEntity<Page<MyCnslListDto>> getmycnsllist(
 			@AuthenticationPrincipal String memberId,
-			@PageableDefault(size =10, sort = "created_at", direction= Sort.Direction.DESC)
-			Pageable pageable){
-		Page<MyCnslListDto> list = cnslService.findmycnsllist(memberId, pageable);
+			@PageableDefault(size = 10, sort = "created_at", direction = Sort.Direction.DESC)
+			Pageable pageable,
+			@RequestParam(required = false) String cnslTp) {
+		Page<MyCnslListDto> list = cnslService.findmycnsllist(memberId, pageable, cnslTp);
 		return ResponseEntity.ok(list);
 	}
 	

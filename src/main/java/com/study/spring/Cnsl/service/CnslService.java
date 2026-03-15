@@ -564,7 +564,13 @@ public class CnslService {
 	}
 
 	// 마이페이지 상담내역 상담사 리스트
-	public Page<MyCnslListDto> findmycnsllist(String memberId, Pageable pageable) {
+	public Page<MyCnslListDto> findmycnsllist(String memberId, Pageable pageable, String cnslTp) {
+		if ("3".equals(cnslTp)) {
+			return cnslRepository.findmycnsllistAi(memberId, pageable);
+		}
+		if ("counselor".equals(cnslTp) || "not3".equals(cnslTp)) {
+			return cnslRepository.findmycnsllistCounselor(memberId, pageable);
+		}
 		return cnslRepository.findmycnsllist(memberId, pageable);
 	}
 

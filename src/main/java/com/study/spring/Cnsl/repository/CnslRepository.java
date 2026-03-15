@@ -680,10 +680,11 @@ public interface CnslRepository extends JpaRepository<Cnsl_Reg, Long> {
     int updateMember(@Param("member") Member member,
                      @Param("delMember") Member deletedMember);
 	
-	// 마이페이지 상담 내역 상담사 리스트
+	// 마이페이지 상담 내역 리스트 (본인만, 정렬: 최신순)
 	@Query(value = """
 			select
 			cr.cnsl_id,
+			cr.cnsl_tp as cnslTp,
 			get_code_nm('cnsl_tp', cr.cnsl_tp) as cnslType,
 			cr.cnsl_title as cnslTitle,
 			m.nickname,
@@ -691,8 +692,44 @@ public interface CnslRepository extends JpaRepository<Cnsl_Reg, Long> {
 			cr.created_at as createdAt
 			from cnsl_reg cr
 			left join member m on m.member_id = cr.cnsler_id
-			""", nativeQuery = true)
+			where cr.member_id = :memberId
+			order by cr.created_at desc
+			""", countQuery = "select count(*) from cnsl_reg cr where cr.member_id = :memberId", nativeQuery = true)
 	Page<MyCnslListDto> findmycnsllist(@Param("memberId") String memberId, Pageable pageable);
+
+	// 마이페이지 상담 내역 - AI 상담만 (cnsl_tp = '3')
+	@Query(value = """
+			select
+			cr.cnsl_id,
+			cr.cnsl_tp as cnslTp,
+			get_code_nm('cnsl_tp', cr.cnsl_tp) as cnslType,
+			cr.cnsl_title as cnslTitle,
+			m.nickname,
+			get_code_nm('cnsl_stat', cr.cnsl_stat) as cnslStat,
+			cr.created_at as createdAt
+			from cnsl_reg cr
+			left join member m on m.member_id = cr.cnsler_id
+			where cr.member_id = :memberId and cr.cnsl_tp = '3'
+			order by cr.created_at desc
+			""", countQuery = "select count(*) from cnsl_reg cr where cr.member_id = :memberId and cr.cnsl_tp = '3'", nativeQuery = true)
+	Page<MyCnslListDto> findmycnsllistAi(@Param("memberId") String memberId, Pageable pageable);
+
+	// 마이페이지 상담 내역 - 상담사 상담만 (cnsl_tp != '3')
+	@Query(value = """
+			select
+			cr.cnsl_id,
+			cr.cnsl_tp as cnslTp,
+			get_code_nm('cnsl_tp', cr.cnsl_tp) as cnslType,
+			cr.cnsl_title as cnslTitle,
+			m.nickname,
+			get_code_nm('cnsl_stat', cr.cnsl_stat) as cnslStat,
+			cr.created_at as createdAt
+			from cnsl_reg cr
+			left join member m on m.member_id = cr.cnsler_id
+			where cr.member_id = :memberId and (cr.cnsl_tp is null or cr.cnsl_tp <> '3')
+			order by cr.created_at desc
+			""", countQuery = "select count(*) from cnsl_reg cr where cr.member_id = :memberId and (cr.cnsl_tp is null or cr.cnsl_tp <> '3')", nativeQuery = true)
+	Page<MyCnslListDto> findmycnsllistCounselor(@Param("memberId") String memberId, Pageable pageable);
 
 	// 마이페이지 상담 내역 상세 페이지
 	@Query(value = """
