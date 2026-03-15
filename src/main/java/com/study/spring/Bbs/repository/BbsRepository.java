@@ -75,7 +75,7 @@ public interface BbsRepository extends JpaRepository<Bbs, Integer> {
                      group by cmt_id) cl_sum on c.cmt_id = cl_sum.cmt_id
         where COALESCE(b.del_yn, 'N') = 'N'
         and b.bbs_div <> 'NOTI'
-        and b.created_at >= NOW() - INTERVAL '1 day'
+        and b.created_at >= (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '1 day'
         group by b.bbs_id, b.title, b.content, b.views, b.created_at
         order by b.bbs_id
     """, nativeQuery = true)
@@ -99,7 +99,7 @@ public interface BbsRepository extends JpaRepository<Bbs, Integer> {
                      group by cmt_id) cl_sum on c.cmt_id = cl_sum.cmt_id
         where COALESCE(b.del_yn, 'N') = 'N'
         and b.bbs_div <> 'NOTI'
-        and b.created_at >= NOW() - INTERVAL '7 days'
+        and b.created_at >= (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '7 days'
         group by b.bbs_id, b.title, b.content, b.views, b.created_at
         order by b.bbs_id
     """, nativeQuery = true)
