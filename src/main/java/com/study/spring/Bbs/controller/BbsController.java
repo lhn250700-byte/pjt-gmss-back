@@ -48,16 +48,26 @@ public class BbsController {
         }
     }
 
-    // [주간 인기글]
+    // [주간 인기글] — 예외 시 500 대신 빈 목록 반환
     @GetMapping("/api/bbs_popularPostWeeklyList")
-    public List<PopularPostClassDto> getWeeklyPopularPosts (@RequestParam("period") String period){
-        return bbsService.findWeeklyPopularPosts(period);
+    public ResponseEntity<?> getWeeklyPopularPosts(@RequestParam("period") String period) {
+        try {
+            return ResponseEntity.ok(bbsService.findWeeklyPopularPosts(period));
+        } catch (Exception e) {
+            log.error("bbs_popularPostWeeklyList error, period={}", period, e);
+            return ResponseEntity.ok(List.<PopularPostClassDto>of());
+        }
     }
 
-    // [월간 인기글]
+    // [월간 인기글] — 예외 시 500 대신 빈 목록 반환
     @GetMapping("/api/bbs_popularPostMonthlyList")
-    public List<PopularPostClassDto> getMonthlyPopularPosts (@RequestParam("period") String period){
-        return bbsService.findMonthlyPopularPosts(period);
+    public ResponseEntity<?> getMonthlyPopularPosts(@RequestParam("period") String period) {
+        try {
+            return ResponseEntity.ok(bbsService.findMonthlyPopularPosts(period));
+        } catch (Exception e) {
+            log.error("bbs_popularPostMonthlyList error, period={}", period, e);
+            return ResponseEntity.ok(List.<PopularPostClassDto>of());
+        }
     }
 
 	// 내 작성 글
