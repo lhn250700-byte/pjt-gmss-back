@@ -60,7 +60,7 @@ public class BbsService {
         List<PopularPostDto> results = bbsRepository.findPopularPostsRealtime();
         return results.stream().map(r -> PopularPostClassDto
                 .builder()
-                .bbsId(r.getBbsId())
+                .bbsId(r.getBbsId() != null ? r.getBbsId().longValue() : null)
                 .title(r.getTitle())
                 .content(r.getContent())
                 .views(r.getViews())
@@ -96,7 +96,7 @@ public class BbsService {
         List<PopularPostDto> results = bbsRepository.findPopularPostsWeekly();
         return results.stream().map(r -> PopularPostClassDto
                 .builder()
-                .bbsId(r.getBbsId())
+                .bbsId(r.getBbsId() != null ? r.getBbsId().longValue() : null)
                 .title(r.getTitle())
                 .content(r.getContent())
                 .views(r.getViews())
@@ -130,7 +130,7 @@ public class BbsService {
         List<PopularPostDto> results = bbsRepository.findPopularPostsMonthly();
         return results.stream().map(r -> PopularPostClassDto
                         .builder()
-                        .bbsId(r.getBbsId())
+                        .bbsId(r.getBbsId() != null ? r.getBbsId().longValue() : null)
                         .title(r.getTitle())
                         .content(r.getContent())
                         .views(r.getViews())
