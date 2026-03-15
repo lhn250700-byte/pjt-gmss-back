@@ -76,8 +76,11 @@ public class CnslService {
             }
         });
         
-        // 유저의 mbti가 설정되어 있는지
-        if (member.getMbti().isEmpty()) throw new IllegalStateException("상담 진행을 위해 사용자 MBTI 정보가 필요합니다.");
+        // 유저의 MBTI·Persona 설정 여부 (null-safe)
+        if (member.getMbti() == null || member.getMbti().trim().isEmpty())
+            throw new IllegalStateException("상담 진행을 위해 사용자 MBTI 정보가 필요합니다.");
+        if (member.getPersona() == null || member.getPersona().trim().isEmpty())
+            throw new IllegalStateException("상담 진행을 위해 사용자 Persona(소개) 정보가 필요합니다.");
 
         // [상담사 영업 시간에 대한 에러 처리]
         CnslerSchd cnslerSchd = cnslerSchdRepository.findScheduleByEmail(cnslReqDto.getCnsler_id())
