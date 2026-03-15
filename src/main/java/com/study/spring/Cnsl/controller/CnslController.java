@@ -43,9 +43,29 @@ public class CnslController {
 		try {
 			Long id = cnslService.reserveCounseling(cnslReqDto);
 			return ResponseEntity.ok(id);
+		} catch (IllegalArgumentException | IllegalStateException e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
 		} catch (Exception e) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Apply failure: " + e.getMessage());
 		}
+	}
+
+	/** AI 즉시 상담 생성 (cnsl_tp=3). 마이페이지 목록·재진입에 사용 */
+	@PostMapping("/api/cnslReg_createAi")
+	public ResponseEntity<?> createAiCounseling(@AuthenticationPrincipal String memberId) {
+		try {
+			Long id = cnslService.reserveCounselingAi(memberId);
+			return ResponseEntity.ok(id);
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Apply failure: " + e.getMessage());
+		}
+	}
+
+	/** 진행 중 AI 상담 ID (재진입 리다이렉트용) */
+	@GetMapping("/api/mypage/activeAiCnsl")
+	public ResponseEntity<?> getActiveAiCnsl(@AuthenticationPrincipal String memberId) {
+		Long cnslId = cnslService.findActiveAiCnslId(memberId);
+		return ResponseEntity.ok(cnslId != null ? java.util.Map.of("cnslId", cnslId) : java.util.Map.of());
 	}
 	
 	// 예약 벨리데이션 체크 [reserve 서비스 코드 내에 있긴 있음]

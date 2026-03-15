@@ -112,6 +112,8 @@ public class CnslService {
 
         // [해당 상담사의 상담 금액 get]
         Long cnslPrice = cnslInfoRepository.findCnslPrice(cnslReqDto.getCnsler_id(), cnslReqDto.getCnsl_tp());
+        if (cnslPrice == null)
+            throw new IllegalStateException("해당 상담사의 선택한 상담 방식 요금 정보가 없습니다.");
         // [포인트 잔액 부족 시 에러 처리]
         if (currPoint < cnslPrice)
             throw new IllegalStateException("보유 포인트가 상담 금액보다 부족합니다.");
@@ -170,6 +172,41 @@ public class CnslService {
         walletRepository.save(wallet);
 
         return cnslReg.getCnslId();
+    }
+
+    /** AI 즉시 상담 등록 (cnsl_tp=3, 상담사 없음). 마이페이지 목록에 노출되도록 동일 DB에 저장 */
+    @Transactional
+    public Long reserveCounselingAi(String memberId) {
+        Member member = memberRepository.findByEmail(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자가 없습니다."));
+        LocalDate today = LocalDate.now();
+        LocalTime now = LocalTime.now();
+        LocalTime endTime = now.plusHours(1);
+
+        Cnsl_Reg cnslReg = Cnsl_Reg.builder()
+                .memberId(member)
+                .cnslerId(null)
+                .cnslCate("1")
+                .cnslTp("3")
+                .cnslTitle("AI 즉시 상담")
+                .cnslContent(null)
+                .cnslDt(today)
+                .cnslStartTime(now)
+                .cnslEndTime(endTime)
+                .cnslStat("C")
+                .cnslTodoYn("Y")
+                .delYn("N")
+                .build();
+        cnslRepository.save(cnslReg);
+        return cnslReg.getCnslId();
+    }
+
+    /** 진행 중 AI 상담 ID 조회 (없으면 null) */
+    public Long findActiveAiCnslId(String memberId) {
+        return cnslRepository
+                .findTopByMemberId_MemberIdAndCnslTpAndCnslStatOrderByCnslIdDesc(memberId, "3", "C")
+                .map(Cnsl_Reg::getCnslId)
+                .orElse(null);
     }
 
     // 신청 시 밸리데이션 체크

@@ -750,4 +750,8 @@ public interface CnslRepository extends JpaRepository<Cnsl_Reg, Long> {
 //	Chat_Msg save(Chat_Msg chatMsg);
 
 	Optional<Cnsl_Reg> findByMemberId(Member member);
+
+	/** 진행 중 AI 상담 1건 (마이페이지/재진입용) */
+	Optional<Cnsl_Reg> findTopByMemberId_MemberIdAndCnslTpAndCnslStatOrderByCnslIdDesc(
+			String memberId, String cnslTp, String cnslStat);
 }
