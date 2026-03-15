@@ -6,6 +6,7 @@ import com.study.spring.Member.entity.Member;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -46,4 +47,13 @@ public interface CnslReviewRepository extends JpaRepository<Cnsl_Review, Integer
   Page<ReviewDto> getReviewList(Pageable pageable, @Param("memberId") String memberId);
 
   Optional<Cnsl_Review> findByMemberId(Member member);
+
+  @Modifying(clearAutomatically = true)
+  @Query("""
+    UPDATE Cnsl_Review r
+    SET r.memberId = :delMember
+    WHERE r.memberId = :member
+""")
+  int updateMember(@Param("member") Member member,
+                   @Param("delMember") Member deletedMember);
 }

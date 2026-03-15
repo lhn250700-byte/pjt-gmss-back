@@ -3,6 +3,7 @@ package com.study.spring.Bbs.repository;
 import com.study.spring.Bbs.entity.Bbs_Comment;
 import com.study.spring.Member.entity.Member;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.repository.query.Param;
@@ -19,4 +20,13 @@ public interface BbsCommentRepository extends JpaRepository<Bbs_Comment, Integer
     List<Bbs_Comment> findByBbsIdAndDelYnOrderByCreatedAtAsc(@Param("bbsId") Integer bbsId);
 
     Optional<Bbs_Comment> findByMemberId(Member member);
+
+    @Modifying(clearAutomatically = true)
+    @Query("""
+        UPDATE Bbs_Comment c
+        SET c.memberId = :delMember
+        WHERE c.memberId = :member
+    """)
+        int updateMember(@Param("member") Member member,
+                         @Param("delMember") Member deletedMember);
 }

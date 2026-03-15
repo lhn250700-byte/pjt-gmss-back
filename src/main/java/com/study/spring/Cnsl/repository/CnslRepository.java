@@ -11,6 +11,7 @@ import com.study.spring.Member.entity.Member;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -570,4 +571,13 @@ public interface CnslRepository extends JpaRepository<Cnsl_Reg, Long> {
 //	Chat_Msg save(Chat_Msg chatMsg);
 
 	Optional<Cnsl_Reg> findByMemberId(Member member);
+
+	@Modifying(clearAutomatically = true)
+	@Query("""
+    UPDATE Cnsl_Reg r
+    SET r.memberId = :delMember
+    WHERE r.memberId = :member
+""")
+	int updateMember(@Param("member") Member member,
+					 @Param("delMember") Member deletedMember);
 }

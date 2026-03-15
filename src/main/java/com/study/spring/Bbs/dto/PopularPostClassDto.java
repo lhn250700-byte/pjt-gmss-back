@@ -13,7 +13,7 @@ public class PopularPostClassDto {
     private Long bbsId;
     private String title;
     private String content;
-    private Integer views;
+    private Integer views = 0;
     private Integer commentCount;
     private Integer bbsLikeCount;
     private Integer bbsDislikeCount;

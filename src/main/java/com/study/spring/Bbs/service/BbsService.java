@@ -84,7 +84,7 @@ public class BbsService {
 		Duration duration = Duration.between(popularPostDto.getCreatedAt(), LocalDateTime.now());
 		Double time = duration.getSeconds() / 3600.0;
 		Double timeScore = Math.pow(time + 1, 1.2);
-		Double score = (popularPostDto.getViews() + (popularPostDto.getCommentCount() * 3)
+		Double score = (Optional.ofNullable(popularPostDto.getViews()).orElse(0) + (popularPostDto.getCommentCount() * 3)
 				+ (popularPostDto.getBbsLikeCount() * 5) + (popularPostDto.getCmtLikeCount() * 1.5)
 				- (popularPostDto.getBbsDisLikeCount() * 6) - (popularPostDto.getCmtDisLikeCount() * 2)) / timeScore;
 
@@ -118,7 +118,7 @@ public class BbsService {
 	public Double calculateWeeklyScore(PopularPostDto popularPostDto) {
 		// weekly_score = (주간 조회수 * 1) + (주간 댓글 수 * 2) + (주간 게시글 좋아요 수 * 3) + (주간 댓글 좋아요
 		// 수 * 1) - (주간 게시글 싫어요 수 * 4) - (주간 댓글 싫어요 * 1.5)
-		Double score = popularPostDto.getViews() + (popularPostDto.getCommentCount() * 2)
+		Double score = Optional.ofNullable(popularPostDto.getViews()).orElse(0) + (popularPostDto.getCommentCount() * 2)
 				+ (popularPostDto.getBbsLikeCount() * 3) + popularPostDto.getCmtLikeCount()
 				- (popularPostDto.getBbsDisLikeCount() * 4) - (popularPostDto.getCmtDisLikeCount() * 1.5);
 
