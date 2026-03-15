@@ -63,12 +63,12 @@ public class BbsService {
                 .bbsId(r.getBbsId() != null ? r.getBbsId().longValue() : null)
                 .title(r.getTitle())
                 .content(r.getContent())
-                .views(r.getViews())
-                .commentCount(r.getCommentCount())
-                .bbsLikeCount(r.getBbsLikeCount())
-                .bbsDislikeCount(r.getBbsDisLikeCount())
-                .cmtLikeCount(r.getCmtLikeCount())
-                .cmtDislikeCount(r.getCmtDisLikeCount())
+                .views(nullToZero(r.getViews()))
+                .commentCount(nullToZero(r.getCommentCount()))
+                .bbsLikeCount(nullToZero(r.getBbsLikeCount()))
+                .bbsDislikeCount(nullToZero(r.getBbsDisLikeCount()))
+                .cmtLikeCount(nullToZero(r.getCmtLikeCount()))
+                .cmtDislikeCount(nullToZero(r.getCmtDisLikeCount()))
                 .createdAt(r.getCreatedAt())
                 .postScore(calculateRealtimeScore(r))
                 .build())
@@ -79,13 +79,14 @@ public class BbsService {
     }
 	
 	public Double calculateRealtimeScore(PopularPostDto popularPostDto) {
-		// score = (조회수 * 1) + (댓글 수 * 3) + ... / (경과시간 + 1)^α — null-safe
+		// score = (조회수 * 1) + (댓글 수 * 3) + ... / (경과시간 + 1)^α — null-safe, 시계 오차 시 NaN 방지
 		LocalDateTime createdAt = popularPostDto.getCreatedAt();
 		Duration duration = createdAt != null
 				? Duration.between(createdAt, LocalDateTime.now())
 				: Duration.ZERO;
-		double time = duration.getSeconds() / 3600.0;
+		double time = Math.max(0, duration.getSeconds() / 3600.0); // 미래 시간이면 0으로 처리해 NaN 방지
 		double timeScore = Math.pow(time + 1, 1.2);
+		if (timeScore <= 0) return 0.0;
 		int views = nullToZero(popularPostDto.getViews());
 		int commentCount = nullToZero(popularPostDto.getCommentCount());
 		int bbsLike = nullToZero(popularPostDto.getBbsLikeCount());
@@ -108,12 +109,12 @@ public class BbsService {
                 .bbsId(r.getBbsId() != null ? r.getBbsId().longValue() : null)
                 .title(r.getTitle())
                 .content(r.getContent())
-                .views(r.getViews())
-                .commentCount(r.getCommentCount())
-                .bbsLikeCount(r.getBbsLikeCount())
-                .bbsDislikeCount(r.getBbsDisLikeCount())
-                .cmtLikeCount(r.getCmtLikeCount())
-                .cmtDislikeCount(r.getCmtDisLikeCount())
+                .views(nullToZero(r.getViews()))
+                .commentCount(nullToZero(r.getCommentCount()))
+                .bbsLikeCount(nullToZero(r.getBbsLikeCount()))
+                .bbsDislikeCount(nullToZero(r.getBbsDisLikeCount()))
+                .cmtLikeCount(nullToZero(r.getCmtLikeCount()))
+                .cmtDislikeCount(nullToZero(r.getCmtDisLikeCount()))
                 .createdAt(r.getCreatedAt())
                 .postScore(calculateWeeklyScore(r))
                 .build())
@@ -144,12 +145,12 @@ public class BbsService {
                         .bbsId(r.getBbsId() != null ? r.getBbsId().longValue() : null)
                         .title(r.getTitle())
                         .content(r.getContent())
-                        .views(r.getViews())
-                        .commentCount(r.getCommentCount())
-                        .bbsLikeCount(r.getBbsLikeCount())
-                        .bbsDislikeCount(r.getBbsDisLikeCount())
-                        .cmtLikeCount(r.getCmtLikeCount())
-                        .cmtDislikeCount(r.getCmtDisLikeCount())
+                        .views(nullToZero(r.getViews()))
+                        .commentCount(nullToZero(r.getCommentCount()))
+                        .bbsLikeCount(nullToZero(r.getBbsLikeCount()))
+                        .bbsDislikeCount(nullToZero(r.getBbsDisLikeCount()))
+                        .cmtLikeCount(nullToZero(r.getCmtLikeCount()))
+                        .cmtDislikeCount(nullToZero(r.getCmtDisLikeCount()))
                         .createdAt(r.getCreatedAt())
                         .postScore(calculateWeeklyScore(r))
                         .build())
