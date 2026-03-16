@@ -701,7 +701,7 @@ public interface CnslRepository extends JpaRepository<Cnsl_Reg, Long> {
 			from cnsl_reg cr
 			left join member m on m.member_id = cr.cnsler_id
 			where cr.member_id = :memberId
-			order by cr.created_at desc
+			order by cr.created_at desc nulls last, cr.cnsl_id desc
 			""", countQuery = "select count(*) from cnsl_reg cr where cr.member_id = :memberId", nativeQuery = true)
 	Page<MyCnslListDto> findmycnsllist(@Param("memberId") String memberId, Pageable pageable);
 
@@ -718,7 +718,7 @@ public interface CnslRepository extends JpaRepository<Cnsl_Reg, Long> {
 			from cnsl_reg cr
 			left join member m on m.member_id = cr.cnsler_id
 			where cr.member_id = :memberId and cr.cnsl_tp = '3'
-			order by cr.created_at desc
+			order by cr.created_at desc nulls last, cr.cnsl_id desc
 			""", countQuery = "select count(*) from cnsl_reg cr where cr.member_id = :memberId and cr.cnsl_tp = '3'", nativeQuery = true)
 	Page<MyCnslListDto> findmycnsllistAi(@Param("memberId") String memberId, Pageable pageable);
 
@@ -735,7 +735,7 @@ public interface CnslRepository extends JpaRepository<Cnsl_Reg, Long> {
 			from cnsl_reg cr
 			left join member m on m.member_id = cr.cnsler_id
 			where cr.member_id = :memberId and (cr.cnsl_tp is null or cr.cnsl_tp <> '3')
-			order by cr.created_at desc
+			order by cr.created_at desc nulls last, cr.cnsl_id desc
 			""", countQuery = "select count(*) from cnsl_reg cr where cr.member_id = :memberId and (cr.cnsl_tp is null or cr.cnsl_tp <> '3')", nativeQuery = true)
 	Page<MyCnslListDto> findmycnsllistCounselor(@Param("memberId") String memberId, Pageable pageable);
 

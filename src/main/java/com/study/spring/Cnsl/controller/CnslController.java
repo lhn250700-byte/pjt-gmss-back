@@ -314,7 +314,7 @@ public class CnslController {
 	@GetMapping("/api/mypage/cnsllist")
 	public ResponseEntity<Page<MyCnslListDto>> getmycnsllist(
 			@AuthenticationPrincipal(expression = "username") String memberId,
-			@PageableDefault(size = 10, sort = "created_at", direction = Sort.Direction.DESC)
+			@PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC)
 			Pageable pageable,
 			@RequestParam(required = false) String cnslTp) {
 		if (memberId == null || memberId.isBlank()) {
