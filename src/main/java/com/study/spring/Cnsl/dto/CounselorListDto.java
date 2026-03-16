@@ -11,7 +11,10 @@ public interface CounselorListDto {
     Integer getCate2Cnt();
     Integer getCate3Cnt();
 
+    /** 상담 건수 (cnsl_reg 건수) */
     Integer getCnslCnt();
+    /** 리뷰 수 (cnsl_review 건수, 별점 옆 표시용) */
+    Integer getReviewCnt();
     Double getAvgEvalPt();
 
     Integer getCnsl1Price();
