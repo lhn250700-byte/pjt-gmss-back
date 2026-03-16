@@ -248,21 +248,33 @@ public class CnslService {
         if (!"A".equals(cnsl_Reg.getCnslStat()) || "Y".equals(cnsl_Reg.getDelYn()))
             throw new IllegalStateException("수정 불가능한 상담 상태입니다.");
 
-        // [해당 상담사의 영업 시간 중 예약 가능한 시간]
-        CnslerSchd cnslerSchd = cnslerSchdRepository.findScheduleByEmail(cnslModiReqDto.getCnsler_id())
-                .orElseThrow(() -> new IllegalArgumentException("상담 영업 정보가 없습니다."));
-        LocalTime startTime = LocalTime.parse(cnslerSchd.getStartTime());
-        LocalTime endTime = LocalTime.parse(cnslerSchd.getEndTime());
-        if (cnslModiReqDto.getCnsl_start_time().isBefore(startTime))
-            throw new IllegalStateException("영업 시간보다 전 시간입니다.");
-        if (cnslModiReqDto.getCnsl_start_time().isAfter(endTime))
-            throw new IllegalStateException("영업 시간 이후 시간입니다.");
-        if (cnslModiReqDto.getCnsl_start_time().equals(endTime))
-            throw new IllegalStateException("마감 시간 전으로 예약해 주시길 바랍니다.");
+        // 시간/일자 변경이 있는 경우에만 영업 시간·수정 가능 시간 체크
+        if (cnslModiReqDto.getCnsl_date() != null || cnslModiReqDto.getCnsl_start_time() != null) {
+            // [해당 상담사의 영업 시간 중 예약 가능한 시간] - DTO가 아닌 기존 예약의 상담사 ID 기준
+            String cnslerId = cnsl_Reg.getCnslerId() != null ? cnsl_Reg.getCnslerId().getMemberId() : null;
+            CnslerSchd cnslerSchd = cnslerSchdRepository.findScheduleByEmail(cnslerId)
+                    .orElseThrow(() -> new IllegalArgumentException("상담 영업 정보가 없습니다."));
+            LocalTime startTime = LocalTime.parse(cnslerSchd.getStartTime());
+            LocalTime endTime = LocalTime.parse(cnslerSchd.getEndTime());
 
-        // [상담 수정 가능 시간 유효성 체크]
-        if (cnslModiReqDto.getCnsl_date().equals(LocalDate.now()))
-            throw new IllegalStateException("수정은 하루 전까지만 가능합니다.");
+            LocalTime newStartTime = cnslModiReqDto.getCnsl_start_time() != null
+                    ? cnslModiReqDto.getCnsl_start_time()
+                    : cnsl_Reg.getCnslStartTime();
+
+            if (newStartTime.isBefore(startTime))
+                throw new IllegalStateException("영업 시간보다 전 시간입니다.");
+            if (newStartTime.isAfter(endTime))
+                throw new IllegalStateException("영업 시간 이후 시간입니다.");
+            if (newStartTime.equals(endTime))
+                throw new IllegalStateException("마감 시간 전으로 예약해 주시길 바랍니다.");
+
+            // [상담 수정 가능 시간 유효성 체크] - 날짜 변경이 있는 경우에만 검사
+            LocalDate newDate = cnslModiReqDto.getCnsl_date() != null
+                    ? cnslModiReqDto.getCnsl_date()
+                    : cnsl_Reg.getCnslDt();
+            if (newDate.equals(LocalDate.now()))
+                throw new IllegalStateException("수정은 하루 전까지만 가능합니다.");
+        }
 
         // patch 작동 방식에 의해 null이면 기존 값 유지, null이 아니면 새로운 값 세팅
         if (cnslModiReqDto.getCnsl_date() != null) {
