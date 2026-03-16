@@ -104,7 +104,7 @@ public interface CnslRepository extends JpaRepository<Cnsl_Reg, Long> {
               where cr.del_yn = 'N'
               and cr.cnsler_Id = :cnslerId
               and (cr.cnsl_stat is null or cr.cnsl_stat = :status)
-              order by cr.cnsl_dt, cr.cnsl_start_time
+              order by cr.cnsl_dt desc, cr.cnsl_start_time desc
             """, nativeQuery = true)
     Page<cnslListDto> findCounselingsByCounselor(@Param("status") String status, Pageable pageable, @Param("cnslerId") String cnslerId);
     
@@ -166,7 +166,7 @@ public interface CnslRepository extends JpaRepository<Cnsl_Reg, Long> {
              where cr.del_yn = 'N'
              and cr.cnsl_stat = 'A'
 			 and cr.cnsler_id = :cnslerId
-             order by cr.cnsl_dt, cr.cnsl_start_time
+             order by cr.cnsl_dt desc, cr.cnsl_start_time desc
             """, nativeQuery = true)
     Page<cnslListWithoutStatusDto> findPendingReservations(Pageable pageable, @Param("cnslerId") String cnslerId);
 
