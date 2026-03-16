@@ -746,6 +746,9 @@ public interface CnslRepository extends JpaRepository<Cnsl_Reg, Long> {
 			m1.nickname AS user_nickname,
 			cr.cnsl_content,
 			m2.nickname AS cnsler_name,
+			m2.img_url AS cnsler_img_url,
+			m2.text AS cnsler_text,
+			m2.profile AS cnsler_profile,
 			cr.cnsl_stat,
 			cr.created_at
 			from cnsl_reg cr
