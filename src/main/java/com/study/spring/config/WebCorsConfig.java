@@ -16,8 +16,8 @@ public class WebCorsConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/**") // /api로 시작하는 모든 경로에 적용
                 // allowCredentials(true)와 함께 사용할 패턴 설정
-                .allowedOriginPatterns("http://localhost:*") 
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // OPTIONS 메서드 추가 (Preflight 대비)
+                .allowedOriginPatterns("http://localhost:*", "https://www.gmss.site", "https://gmss.site", "https://testchat-alpha.vercel.app") 
+                .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS") // PATCH 추가: cnslReg_update 등 (Preflight 대비)
                 .allowedHeaders("*") // 모든 헤더 허용 (필요시 특정 헤더만 나열)
                 .exposedHeaders("Location", "Set-Cookie") // 클라이언트가 읽을 수 있는 응답 헤더 추가
                 .allowCredentials(true) // 인증 정보(쿠키, 인증 헤더 등) 포함 허용
