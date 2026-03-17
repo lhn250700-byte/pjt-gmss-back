@@ -9,6 +9,8 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -26,6 +28,13 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class CustomSecurityConfig {
 
     private final CustomOAuth2UserService customOAuth2UserService;
+    private final OAuth2AuthorizationRequestResolver kakaoAuthorizationRequestResolver;
+
+    @Bean
+    public OAuth2AuthorizationRequestResolver kakaoAuthorizationRequestResolverBean(
+            ClientRegistrationRepository clientRegistrationRepository) {
+        return new KakaoAuthorizationRequestResolver(clientRegistrationRepository);
+    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception { // 메서드 선언 필수
@@ -74,8 +83,11 @@ public class CustomSecurityConfig {
         // JWT 필터 추가
         http.addFilterBefore(new JWTCheckFilter(), UsernamePasswordAuthenticationFilter.class);
 
-        // OAuth2 로그인 설정
+        // OAuth2 로그인 설정 (카카오는 PKCE 미지원으로 400 방지 위해 커스텀 리졸버 사용)
         http.oauth2Login(oauth2 -> oauth2
+            .authorizationEndpoint(auth -> auth
+                .authorizationRequestResolver(kakaoAuthorizationRequestResolver)
+            )
             .userInfoEndpoint(userInfo ->
                 userInfo.userService(customOAuth2UserService)
             )
