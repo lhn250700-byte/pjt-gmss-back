@@ -9,7 +9,6 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -29,12 +28,6 @@ public class CustomSecurityConfig {
 
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2AuthorizationRequestResolver kakaoAuthorizationRequestResolver;
-
-    @Bean
-    public OAuth2AuthorizationRequestResolver kakaoAuthorizationRequestResolverBean(
-            ClientRegistrationRepository clientRegistrationRepository) {
-        return new KakaoAuthorizationRequestResolver(clientRegistrationRepository);
-    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception { // 메서드 선언 필수

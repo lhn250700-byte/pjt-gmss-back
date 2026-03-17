@@ -20,6 +20,7 @@ docker logs gmss-spring --tail 300
 | `FATAL: password authentication failed` | DB 비밀번호 불일치 | Supabase 대시보드 → Settings → Database 에서 Connection string 비밀번호와 `application.properties` 의 `spring.datasource.password` 일치 여부 확인 |
 | `OutOfMemoryError` / `Killed` | 메모리 부족 | JVM 힙 제한 또는 Docker 메모리 한도 설정 (아래 참고) |
 | `Address already in use` / `8080` | 포트 충돌 | `ss -tlnp \| grep 8080` 로 사용 중인 프로세스 확인 후 종료 또는 포트 변경 |
+| `BeanCreationException` / `OAuth2AuthorizationRequestResolver` / `CustomSecurityConfig` | OAuth2·Security 빈 생성 실패 | 카카오 리졸버·ClientRegistrationRepository 등 Security 설정 확인. `docs/카카오_로그인_설정.md` 참고. |
 
 ## 3. OOM일 때: JVM 메모리 제한
 
