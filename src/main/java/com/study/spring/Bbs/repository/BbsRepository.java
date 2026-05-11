@@ -102,6 +102,7 @@ public interface BbsRepository extends JpaRepository<Bbs, Integer> {
         and b.created_at >= (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '7 days'
         group by b.bbs_id, b.title, b.content, b.views, b.created_at
         order by b.bbs_id
+        limit 10
     """, nativeQuery = true)
 	List<PopularPostDto> findPopularPostsWeekly();
 

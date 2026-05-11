@@ -17,6 +17,7 @@ import com.study.spring.Member.repository.MemberRepository;
 import com.study.spring.keyword.service.KeywordService;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -103,29 +104,37 @@ public class BbsService {
 	}
 
     // [주간 인기글] — 전용 쿼리 사용
-    @Cacheable(value = "popularweekly", key = "'all'")
-    public List<PopularPostClassDto> findWeeklyPopularPosts(String period) {
-        List<PopularPostDto> results = bbsRepository.findPopularPostsWeekly();
-        return results.stream().map(r -> PopularPostClassDto
-                .builder()
-                .bbsId(r.getBbsId() != null ? r.getBbsId().longValue() : null)
-                .title(r.getTitle())
-                .content(r.getContent())
-                .views(nullToZero(r.getViews()))
-                .commentCount(nullToZero(r.getCommentCount()))
-                .bbsLikeCount(nullToZero(r.getBbsLikeCount()))
-                .bbsDislikeCount(nullToZero(r.getBbsDisLikeCount()))
-                .cmtLikeCount(nullToZero(r.getCmtLikeCount()))
-                .cmtDislikeCount(nullToZero(r.getCmtDisLikeCount()))
-                .createdAt(r.getCreatedAt())
-                .postScore(calculateWeeklyScore(r))
-                .build())
-                .sorted(Comparator.comparing(PopularPostClassDto::getPostScore).reversed()
-                        .thenComparing(PopularPostClassDto::getCreatedAt, Comparator.reverseOrder()))
-                .limit(10)
-                .toList();
-    }
+	@Cacheable(value = "popularweekly", key = "'all'")
+	public List<PopularPostClassDto> findWeeklyPopularPosts(String period) {
+	    return fetchAndBuildWeeklyPosts();
+	}
 
+	// 스케줄러 전용으로 추가
+	@CachePut(value = "popularweekly", key = "'all'")
+	public List<PopularPostClassDto> refreshWeeklyPopularPostsCache() {
+	    return fetchAndBuildWeeklyPosts();
+	}
+
+	// 공통 로직 분리
+	private List<PopularPostClassDto> fetchAndBuildWeeklyPosts() {
+	    List<PopularPostDto> results = bbsRepository.findPopularPostsWeekly();
+	    log.info("weekly results size = {}", results.size());
+
+	    return results.stream().map(r -> PopularPostClassDto.builder()
+	            .bbsId(r.getBbsId() != null ? r.getBbsId().longValue() : null)
+	            .title(r.getTitle())
+	            .content(r.getContent())
+	            .views(nullToZero(r.getViews()))
+	            .commentCount(nullToZero(r.getCommentCount()))
+	            .bbsLikeCount(nullToZero(r.getBbsLikeCount()))
+	            .bbsDislikeCount(nullToZero(r.getBbsDisLikeCount()))
+	            .cmtLikeCount(nullToZero(r.getCmtLikeCount()))
+	            .cmtDislikeCount(nullToZero(r.getCmtDisLikeCount()))
+	            .createdAt(r.getCreatedAt())
+	            .postScore(calculateWeeklyScore(r))
+	            .build()
+	    ).toList();
+	}
 
 	public Double calculateWeeklyScore(PopularPostDto popularPostDto) {
 		// weekly_score = (주간 조회수 * 1) + (주간 댓글 수 * 2) + ... — null-safe

@@ -2,6 +2,7 @@ package com.study.spring.Member.controller;
 
 import com.study.spring.Member.dto.*;
 import com.study.spring.Member.service.MemberService;
+import com.study.spring.Member.service.TokenBlackListService;
 import com.study.spring.util.JWTUtil;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -30,6 +31,8 @@ public class MemberController {
 	MemberService memberService;
 	@Autowired
 	AuthenticationManager authenticationManager;
+	@Autowired
+	TokenBlackListService tokenBlackListService;
 
 	@GetMapping("/")
 	public String hello() {
@@ -56,6 +59,7 @@ public class MemberController {
 			Map<String, Object> claims = memberDto.getClaims();
 			String accessToken = JWTUtil.generateToken(claims, 10);
 			String refreshToken = JWTUtil.generateToken(claims, 60 * 24);
+			tokenBlackListService.saveRT(username, refreshToken);
 			// accessToken은 응답 body만 사용, 쿠키에는 refreshToken만 저장
 			Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
 			refreshTokenCookie.setHttpOnly(true);
@@ -109,7 +113,9 @@ public class MemberController {
 
 	@PostMapping("/api/auth/refresh")
 	public ResponseEntity<Map<String, Object>> refreshToken(
-			@CookieValue(value = "refreshToken", required = false) String refreshToken, HttpServletResponse response) {
+			@CookieValue(value = "refreshToken", required = false) String refreshToken, 
+			HttpServletResponse response
+		) {
 
 		try {
 			// 1) refreshToken 쿠키 확인
@@ -128,6 +134,15 @@ public class MemberController {
 			}
 
 			String email = (String) claims.get("email");
+			// Redis RT와 쿠키에 있는 RT 일치 여부 확인
+			if (!tokenBlackListService.isRefreshTokenValid(email, refreshToken)) {
+				log.warn("Redis RT 불일치 -> 탈취 의심: email={}", email);
+				tokenBlackListService.deleteRefreshToken(email);
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+						.body(Map.of("error", "유효하지 않은 refreshToken입니다."));
+			}
+			
+			
 			MemberDto member = memberService.getMemberByEmail(email);
 			if (member == null) {
 				log.warn("DB에 해당 사용자가 존재하지 않습니다. email={}", email);
@@ -143,6 +158,7 @@ public class MemberController {
 
 			// 4) refreshToken 회전 정책: 새로운 refreshToken 생성 및 쿠키 설정
 			String newRefreshToken = JWTUtil.generateToken(newClaims, 60 * 24); // 24시간
+			tokenBlackListService.rTT(email, newRefreshToken);
 
 			Cookie refreshTokenCookie = new Cookie("refreshToken", newRefreshToken);
 			refreshTokenCookie.setHttpOnly(true);
@@ -171,11 +187,27 @@ public class MemberController {
 	}
 
 	@PostMapping("/api/auth/signout")
-	public ResponseEntity<Map<String, Object>> logout(@AuthenticationPrincipal MemberDto principal,
-			HttpServletResponse response) {
+	public ResponseEntity<Map<String, Object>> logout(
+			@AuthenticationPrincipal MemberDto principal,
+			@RequestHeader(value="Authorization", required = false) String authHeader,
+			HttpServletResponse response
+		) {
 
 		try {
-			// 1) refreshToken 쿠키 삭제
+			String email = principal != null ? principal.getEmail() : null;
+			
+			// 1) 블랙리스트 등록 
+			if (authHeader != null && authHeader.startsWith("Bearer ")) {
+				String accessToken = authHeader.substring(7);
+				tokenBlackListService.addToBlackList(accessToken);
+			}
+			
+			// 2) Redis에서 RT 삭제
+			if (email != null) {
+				tokenBlackListService.deleteRefreshToken(email);
+			}
+			
+			// 3) refreshToken 쿠키 삭제
 			// 쿠키를 삭제하려면 같은 이름의 쿠키를 MaxAge 0으로 설정
 			Cookie refreshTokenCookie = new Cookie("refreshToken", null);
 			refreshTokenCookie.setHttpOnly(true);
@@ -184,13 +216,13 @@ public class MemberController {
 			refreshTokenCookie.setAttribute("SameSite", "Lax");
 			response.addCookie(refreshTokenCookie);
 
-			// 2) SecurityContext 클리어
+			// 4) SecurityContext 클리어
 			SecurityContextHolder.clearContext();
 
-			String email = principal != null ? principal.getEmail() : "알 수 없음";
+			
 			log.info("로그아웃 성공: email={}", email);
 
-			// 3) 성공 응답 반환
+			// 5) 성공 응답 반환
 			return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
 					.body(Map.of("success", true, "message", "로그아웃되었습니다."));
 

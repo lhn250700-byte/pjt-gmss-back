@@ -2,6 +2,7 @@ package com.study.spring.security.filter;
 
 import com.google.gson.Gson;
 import com.study.spring.Member.dto.MemberDto;
+import com.study.spring.Member.service.TokenBlackListService;
 import com.study.spring.util.JWTUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -25,6 +26,11 @@ import java.util.Map;
  */
 @Log4j2
 public class JWTCheckFilter extends OncePerRequestFilter {
+	private final TokenBlackListService tokenBlackListService;
+	
+	public JWTCheckFilter (TokenBlackListService tokenBlackListService) {
+		this.tokenBlackListService = tokenBlackListService;
+	}
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
@@ -128,6 +134,14 @@ public class JWTCheckFilter extends OncePerRequestFilter {
         }
 
         try {
+        		// 블랙리스트 확인 (서명 검증 전에 먼저 차단)
+        		if (tokenBlackListService.isBlack(accessToken)) {
+        			log.warn("블랙리스트에 등록된 AT: 접근 차단");
+        			sendErrorResponse(response, "로그아웃된 토큰입니다.");
+        			return;
+        		}
+        	
+        		// 기존 서명/만료 검증
             Map<String, Object> claims = JWTUtil.validateToken(accessToken);
 
             log.info("JWT claims: {}", claims);
@@ -167,21 +181,18 @@ public class JWTCheckFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
 
         } catch (Exception e) {
-            log.error("JWT Check Error..............");
-            log.error(e.getMessage(), e);
-
-            Gson gson = new Gson();
-            String msg = gson.toJson(Map.of(
-                    "error", "ERROR_ACCESS_TOKEN",
-                    "message", "유효하지 않은 Access Token입니다."
-            ));
-
-            response.setContentType("application/json;charset=UTF-8");
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-
-            PrintWriter printWriter = response.getWriter();
-            printWriter.println(msg);
-            printWriter.close();
+    			log.error("JWT Check Error: {}", e.getMessage());
+        		sendErrorResponse(response, "유효하지 않은 Access Token입니다.");
         }
+    }
+    
+    private void sendErrorResponse(HttpServletResponse response, String message) throws IOException {
+        Gson gson = new Gson();
+        String msg = gson.toJson(Map.of("error", "ERROR_ACCESS_TOKEN", "message", message));
+        response.setContentType("application/json;charset=UTF-8");
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        PrintWriter pw = response.getWriter();
+        pw.println(msg);
+        pw.close();
     }
 }

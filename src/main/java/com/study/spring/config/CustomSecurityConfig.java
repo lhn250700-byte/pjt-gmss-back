@@ -1,6 +1,7 @@
 package com.study.spring.config; // 이 줄을 반드시 추가하세요!
 
 import com.study.spring.Member.service.CustomOAuth2UserService;
+import com.study.spring.Member.service.TokenBlackListService;
 import com.study.spring.security.filter.JWTCheckFilter;
 import com.study.spring.security.handler.APILoginFailHandler;
 import com.study.spring.security.handler.APILoginSuccessHandler;
@@ -28,6 +29,7 @@ public class CustomSecurityConfig {
 
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2AuthorizationRequestResolver kakaoAuthorizationRequestResolver;
+    private final TokenBlackListService tokenBlackListService;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception { // 메서드 선언 필수
@@ -74,7 +76,7 @@ public class CustomSecurityConfig {
         );
 
         // JWT 필터 추가
-        http.addFilterBefore(new JWTCheckFilter(), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(new JWTCheckFilter(tokenBlackListService), UsernamePasswordAuthenticationFilter.class);
 
         // OAuth2 로그인 설정 (카카오는 PKCE 미지원으로 400 방지 위해 커스텀 리졸버 사용)
         http.oauth2Login(oauth2 -> oauth2
