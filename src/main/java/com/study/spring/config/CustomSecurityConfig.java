@@ -100,9 +100,7 @@ public class CustomSecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
         config.setAllowedOriginPatterns(java.util.List.of(
-            "https://www.gmss.site",
-            "https://gmss.site",
-            "https://testchat-alpha.vercel.app",
+            "http://localhost:8080",
             "http://localhost:5173",
             "http://localhost:3000"
         ));

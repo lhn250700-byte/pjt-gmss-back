@@ -67,7 +67,7 @@ public class APILoginSuccessHandler implements AuthenticationSuccessHandler {
 		if (isSocialLogin) {
 			String frontendBase = System.getenv("FRONTEND_BASE_URL");
 			if (frontendBase == null || frontendBase.isBlank()) {
-				frontendBase = "https://www.gmss.site";
+				frontendBase = "http://localhost:8080";
 			}
 			if (frontendBase.endsWith("/")) frontendBase = frontendBase.substring(0, frontendBase.length() - 1);
 

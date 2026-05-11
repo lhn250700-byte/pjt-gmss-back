@@ -10,8 +10,8 @@ services:
     ports:
       - '8080:8080'   # 호스트에서 curl localhost:8080 으로 API 직접 확인용 (nginx 경유 없이)
     environment:
-      - CORS_ORIGINS=https://gmss.site,https://www.gmss.site,https://testchat-alpha.vercel.app
-      - FRONTEND_BASE_URL=https://www.gmss.site
+      - CORS_ORIGINS=http://localhost:8080
+      - FRONTEND_BASE_URL=http://localhost:8080
       # 필요하면 여기서 DB/testchatpy base-url도 환경변수로 주입(프로젝트 설정에 맞게)
     restart: always
     networks: [gmss]
